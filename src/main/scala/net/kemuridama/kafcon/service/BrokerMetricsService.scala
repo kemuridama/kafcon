@@ -31,10 +31,10 @@ trait BrokerMetricsService
       metricsLogs.find(_.brokerId == broker.id) match {
         case Some(brokerLogs) => {
           val logs = if (brokerLogs.logs.size >= maxLogSize) brokerLogs.logs.init else brokerLogs.logs
-          metricsLogs = metricsLogs.filter(_.brokerId != broker.id) :+ brokerLogs.copy(logs = metrics +: logs)
+          metricsLogs = metricsLogs.filter(_.brokerId != broker.id) :+ brokerLogs.copy(latest = metrics, logs = metrics +: logs)
         }
         case _ => {
-          metricsLogs :+= BrokerMetrics(broker.id, List(metrics))
+          metricsLogs :+= BrokerMetrics(broker.id, metrics, List(metrics))
         }
       }
     }

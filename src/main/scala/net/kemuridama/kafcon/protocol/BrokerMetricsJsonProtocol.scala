@@ -6,6 +6,6 @@ trait BrokerMetricsJsonProtocol
   extends JsonProtocol
   with BrokerMetricsLogJsonProtocol {
 
-  implicit def brokerMetricsFormat = jsonFormat2(BrokerMetrics)
+  implicit def brokerMetricsFormat = jsonFormat3(BrokerMetrics)
 
 }
