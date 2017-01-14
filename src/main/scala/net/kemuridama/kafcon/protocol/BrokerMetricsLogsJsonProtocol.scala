@@ -4,7 +4,7 @@ import net.kemuridama.kafcon.model.BrokerMetricsLogs
 
 trait BrokerMetricsLogsJsonProtocol
   extends JsonProtocol
-  with BrokerMetricsJsonProtocol {
+  with BrokerMetricsLogJsonProtocol {
 
   implicit def brokerMetricsLogsFormat = jsonFormat2(BrokerMetricsLogs)
 

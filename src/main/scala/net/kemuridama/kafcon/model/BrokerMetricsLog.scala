@@ -2,7 +2,7 @@ package net.kemuridama.kafcon.model
 
 import org.joda.time.DateTime
 
-case class BrokerMetrics(
+case class BrokerMetricsLog(
   messageInPerSec: MeterMetric,
   bytesInPerSec: MeterMetric,
   bytesOutPerSec: MeterMetric,

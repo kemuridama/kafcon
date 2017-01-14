@@ -2,7 +2,7 @@ package net.kemuridama.kafcon.service
 
 import javax.management._
 
-import net.kemuridama.kafcon.model.{BrokerMetricsLogs, BrokerMetrics, SystemMetrics, MeterMetric, MetricsType}
+import net.kemuridama.kafcon.model.{BrokerMetricsLogs, BrokerMetricsLog, SystemMetrics, MeterMetric, MetricsType}
 import net.kemuridama.kafcon.util.{UsesApplicationConfig, MixinApplicationConfig}
 
 trait BrokerMetricsService
@@ -20,7 +20,7 @@ trait BrokerMetricsService
   def update: Unit = {
     brokerService.getAll.map { broker =>
       val metrics = mbeanServerConnectionService.get(broker.id).map { mbsc =>
-        BrokerMetrics(
+        BrokerMetricsLog(
           getMeterMetric(mbsc, MetricsType.MessagesInPerSec.toObjectName),
           getMeterMetric(mbsc, MetricsType.BytesInPerSec.toObjectName),
           getMeterMetric(mbsc, MetricsType.BytesOutPerSec.toObjectName),
@@ -42,7 +42,7 @@ trait BrokerMetricsService
 
   def getAll: List[BrokerMetricsLogs] = metricsLogs
   def get(brokerId: Int): Option[BrokerMetricsLogs] = metricsLogs.find(_.brokerId == brokerId)
-  def getLatest(brokerId: Int): Option[Option[BrokerMetrics]] = get(brokerId).map(_.logs.last)
+  def getLatest(brokerId: Int): Option[Option[BrokerMetricsLog]] = get(brokerId).map(_.logs.last)
 
   private def getMeterMetric(mbsc: MBeanServerConnection, objectName: ObjectName): MeterMetric = {
     val attrList = Array("Count", "MeanRate", "OneMinuteRate", "FiveMinuteRate", "FifteenMinuteRate")
