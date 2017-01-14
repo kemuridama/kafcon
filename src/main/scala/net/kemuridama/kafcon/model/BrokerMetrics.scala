@@ -1,6 +1,6 @@
 package net.kemuridama.kafcon.model
 
-case class BrokerMetricsLogs(
+case class BrokerMetrics(
   brokerId: Int,
   logs: List[Option[BrokerMetricsLog]]
 )

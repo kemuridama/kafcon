@@ -2,7 +2,7 @@ package net.kemuridama.kafcon.service
 
 import javax.management._
 
-import net.kemuridama.kafcon.model.{BrokerMetricsLogs, BrokerMetricsLog, SystemMetrics, MeterMetric, MetricsType}
+import net.kemuridama.kafcon.model.{BrokerMetrics, BrokerMetricsLog, SystemMetrics, MeterMetric, MetricsType}
 import net.kemuridama.kafcon.util.{UsesApplicationConfig, MixinApplicationConfig}
 
 trait BrokerMetricsService
@@ -15,7 +15,7 @@ trait BrokerMetricsService
 
   private lazy val maxLogSize = applicationConfig.cluster.getInt("metricsMaxLogSize")
 
-  private var metricsLogs = List.empty[BrokerMetricsLogs]
+  private var metricsLogs = List.empty[BrokerMetrics]
 
   def update: Unit = {
     brokerService.getAll.map { broker =>
@@ -34,14 +34,14 @@ trait BrokerMetricsService
           metricsLogs = metricsLogs.filter(_.brokerId != broker.id) :+ brokerLogs.copy(logs = metrics +: logs)
         }
         case _ => {
-          metricsLogs :+= BrokerMetricsLogs(broker.id, List(metrics))
+          metricsLogs :+= BrokerMetrics(broker.id, List(metrics))
         }
       }
     }
   }
 
-  def getAll: List[BrokerMetricsLogs] = metricsLogs
-  def get(brokerId: Int): Option[BrokerMetricsLogs] = metricsLogs.find(_.brokerId == brokerId)
+  def getAll: List[BrokerMetrics] = metricsLogs
+  def get(brokerId: Int): Option[BrokerMetrics] = metricsLogs.find(_.brokerId == brokerId)
   def getLatest(brokerId: Int): Option[Option[BrokerMetricsLog]] = get(brokerId).map(_.logs.last)
 
   private def getMeterMetric(mbsc: MBeanServerConnection, objectName: ObjectName): MeterMetric = {
