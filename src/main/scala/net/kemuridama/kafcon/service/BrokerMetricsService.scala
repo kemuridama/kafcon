@@ -37,7 +37,6 @@ trait BrokerMetricsService
 
   def getAll: List[BrokerMetrics] = metricsList
   def get(brokerId: Int): Option[BrokerMetrics] = metricsList.find(_.brokerId == brokerId)
-  def getLatest(brokerId: Int): Option[Option[BrokerMetricsLog]] = get(brokerId).map(_.logs.last)
 
   def getCombined: CombinedBrokerMetrics = {
     val combinedMetricsLogs = metricsList.map(_.logs).transpose.map(_.flatten.foldLeft(new CombinedBrokerMetricsLog)((c, l) => c + l))
