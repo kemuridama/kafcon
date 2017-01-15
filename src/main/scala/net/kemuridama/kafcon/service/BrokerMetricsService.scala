@@ -2,7 +2,7 @@ package net.kemuridama.kafcon.service
 
 import javax.management._
 
-import net.kemuridama.kafcon.model.{BrokerMetrics, BrokerMetricsLog, SystemMetrics, MeterMetric, MetricsType}
+import net.kemuridama.kafcon.model.{BrokerMetrics, CombinedBrokerMetrics, BrokerMetricsLog, CombinedBrokerMetricsLog, SystemMetrics, MeterMetric, MetricsType}
 import net.kemuridama.kafcon.util.{UsesApplicationConfig, MixinApplicationConfig}
 
 trait BrokerMetricsService
@@ -38,6 +38,14 @@ trait BrokerMetricsService
   def getAll: List[BrokerMetrics] = metricsList
   def get(brokerId: Int): Option[BrokerMetrics] = metricsList.find(_.brokerId == brokerId)
   def getLatest(brokerId: Int): Option[Option[BrokerMetricsLog]] = get(brokerId).map(_.logs.last)
+
+  def getCombined: CombinedBrokerMetrics = {
+    val combinedMetricsLogs = metricsList.map(_.logs).transpose.map(_.flatten.foldLeft(new CombinedBrokerMetricsLog)((c, l) => c + l))
+    CombinedBrokerMetrics(
+      combinedMetricsLogs.head,
+      combinedMetricsLogs
+    )
+  }
 
   private def getMeterMetric(mbsc: MBeanServerConnection, objectName: ObjectName): MeterMetric = {
     val attrList = Array("Count", "MeanRate", "OneMinuteRate", "FiveMinuteRate", "FifteenMinuteRate")

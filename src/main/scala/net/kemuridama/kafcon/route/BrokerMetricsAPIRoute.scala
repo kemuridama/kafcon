@@ -5,17 +5,18 @@ import akka.http.scaladsl.model.StatusCodes
 
 import net.kemuridama.kafcon.model.APIResponse
 import net.kemuridama.kafcon.service.{UsesBrokerMetricsService, MixinBrokerMetricsService}
-import net.kemuridama.kafcon.protocol.{APIResponseJsonProtocol, BrokerMetricsJsonProtocol}
+import net.kemuridama.kafcon.protocol.{APIResponseJsonProtocol, BrokerMetricsJsonProtocol, CombinedBrokerMetricsJsonProtocol}
 
 trait BrokerMetricsAPIRoute
   extends UsesBrokerMetricsService
   with APIResponseJsonProtocol
-  with BrokerMetricsJsonProtocol {
+  with BrokerMetricsJsonProtocol
+  with CombinedBrokerMetricsJsonProtocol {
 
   val route = pathPrefix("brokers") {
     path("metrics") {
       get {
-        complete(APIResponse(brokerMetricsService.getAll))
+        complete(APIResponse(brokerMetricsService.getCombined))
       }
     } ~
     path(IntNumber / "metrics") { id =>
