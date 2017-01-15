@@ -15,11 +15,11 @@ trait BrokerMetricsService
 
   private lazy val maxLogSize = applicationConfig.cluster.getInt("metricsMaxLogSize")
 
-  private var metricsLogs = List.empty[BrokerMetrics]
+  private var metricsList = List.empty[BrokerMetrics]
 
   def update: Unit = {
     brokerService.getAll.map { broker =>
-      val metrics = mbeanServerConnectionService.get(broker.id).map { mbsc =>
+      val metricsLog = mbeanServerConnectionService.get(broker.id).map { mbsc =>
         BrokerMetricsLog(
           getMeterMetric(mbsc, MetricsType.MessagesInPerSec.toObjectName),
           getMeterMetric(mbsc, MetricsType.BytesInPerSec.toObjectName),
@@ -28,20 +28,15 @@ trait BrokerMetricsService
         )
       }
 
-      metricsLogs.find(_.brokerId == broker.id) match {
-        case Some(brokerLogs) => {
-          val logs = if (brokerLogs.logs.size >= maxLogSize) brokerLogs.logs.init else brokerLogs.logs
-          metricsLogs = metricsLogs.filter(_.brokerId != broker.id) :+ brokerLogs.copy(latest = metrics, logs = metrics +: logs)
-        }
-        case _ => {
-          metricsLogs :+= BrokerMetrics(broker.id, metrics, List(metrics))
-        }
+      metricsList = get(broker.id).fold(metricsList :+ BrokerMetrics(broker.id, metricsLog, List(metricsLog))) { metrics =>
+        val logs = if (metrics.logs.size >= maxLogSize) metrics.logs.init else metrics.logs
+        metricsList.filter(_.brokerId != broker.id) :+ metrics.copy(latest = metricsLog, logs = metricsLog +: logs)
       }
     }
   }
 
-  def getAll: List[BrokerMetrics] = metricsLogs
-  def get(brokerId: Int): Option[BrokerMetrics] = metricsLogs.find(_.brokerId == brokerId)
+  def getAll: List[BrokerMetrics] = metricsList
+  def get(brokerId: Int): Option[BrokerMetrics] = metricsList.find(_.brokerId == brokerId)
   def getLatest(brokerId: Int): Option[Option[BrokerMetricsLog]] = get(brokerId).map(_.logs.last)
 
   private def getMeterMetric(mbsc: MBeanServerConnection, objectName: ObjectName): MeterMetric = {
