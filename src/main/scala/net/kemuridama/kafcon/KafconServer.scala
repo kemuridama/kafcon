@@ -29,6 +29,7 @@ trait KafconServer
   }
 
   private val routes = {
+    APIPageRoutes.route ~
     apiRoutes
   }
 
