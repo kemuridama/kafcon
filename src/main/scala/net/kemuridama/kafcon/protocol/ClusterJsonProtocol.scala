@@ -7,6 +7,6 @@ trait ClusterJsonProtocol
   with BrokerJsonProtocol
   with TopicJsonProtocol {
 
-  implicit val clusterFormat = jsonFormat5(Cluster)
+  implicit val clusterFormat = jsonFormat6(Cluster)
 
 }
