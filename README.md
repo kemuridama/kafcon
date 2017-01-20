@@ -20,7 +20,8 @@ The current beta version of Kafcon provides a feature below:
   * `GET /api/v1/brokers`: Metadata of all brokers
   * `GET /api/v1/brokers/<brokerId>`: Metadata of a specific broker
 * Broker metrics API
-  * `GET /api/v1/brokers/metrics`: Combined metrics of all brokers
+  * `GET /api/v1/brokers/metrics`: Metrics of all brokers
+  * `GET /api/v1/brokers/metrics/combined`: Combined metrics of all brokers
   * `GET /api/v1/brokers/<brokerId>/metrics`: Metrics of a specific broker
 * Topic API
   * `GET /api/v1/topics`: Metadata of all topics

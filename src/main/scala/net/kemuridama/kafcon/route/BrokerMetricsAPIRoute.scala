@@ -14,9 +14,16 @@ trait BrokerMetricsAPIRoute
   with CombinedBrokerMetricsJsonProtocol {
 
   val route = pathPrefix("brokers") {
-    path("metrics") {
-      get {
-        complete(APIResponse(brokerMetricsService.getCombined))
+    pathPrefix("metrics") {
+      pathEnd {
+        get {
+          complete(APIResponse(brokerMetricsService.getAll))
+        }
+      } ~
+      path("combined") {
+        get {
+          complete(APIResponse(brokerMetricsService.getCombined))
+        }
       }
     } ~
     path(IntNumber / "metrics") { id =>
