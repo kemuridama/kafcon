@@ -1,6 +1,6 @@
 val zookeeperVersion = "3.4.9"
 val kafkaVersion = "0.10.1.1"
-val akkaHttpVersion = "10.0.1"
+val akkaHttpVersion = "10.0.3"
 val twirlVersion = "1.3.0"
 
 lazy val root = (project in file("."))
