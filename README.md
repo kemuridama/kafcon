@@ -6,12 +6,13 @@ Inspired by Kafka Manager and Trifecta which are famous as Kafka Web UI.
 This is **EXPERIMENTAL** and **UNDER DEVELOPMENT** software for personal use.
 
 ## Features
-The current beta version of Kafcon provides a feature below:
+The current beta version of Kafcon provides features below:
 
 * RESTful API
   * Cluster metadata
   * Brokers metadata and metrics
   * Topics metadata
+* Web user interface -> [Kafcon UI](https://github.com/kemuridama/kafcon-ui)
 
 ## RESTful API Endpoints
 * Cluster API
@@ -30,7 +31,8 @@ The current beta version of Kafcon provides a feature below:
 ## Future features
 
 * Web UI (probably SPA)
-* Viewing Messages stored in Kafka (like Trifecta)
+* Control Kafka for cluster administrators
+* Server down detection
 
 ## Licence
 
