@@ -15,14 +15,14 @@ trait BrokersAPIRoute
   val route = pathPrefix("brokers") {
     pathEnd {
       get {
-        complete(APIResponse(brokerService.getAll))
+        complete(APIResponse(Some(brokerService.getAll)))
       }
     } ~
     pathPrefix(IntNumber) { id =>
       pathEnd {
         get {
           brokerService.get(id) match {
-            case Some(broker) => complete(APIResponse(broker))
+            case Some(broker) => complete(APIResponse(Some(broker)))
             case _ => complete(StatusCodes.NotFound)
           }
         }

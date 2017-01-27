@@ -17,19 +17,19 @@ trait BrokerMetricsAPIRoute
     pathPrefix("metrics") {
       pathEnd {
         get {
-          complete(APIResponse(brokerMetricsService.getAll))
+          complete(APIResponse(Some(brokerMetricsService.getAll)))
         }
       } ~
       path("combined") {
         get {
-          complete(APIResponse(brokerMetricsService.getCombined))
+          complete(APIResponse(Some(brokerMetricsService.getCombined)))
         }
       }
     } ~
     path(IntNumber / "metrics") { id =>
       get {
         brokerMetricsService.get(id) match {
-          case Some(metrics) => complete(APIResponse(metrics))
+          case Some(metrics) => complete(APIResponse(Some(metrics)))
           case _ => complete(StatusCodes.NotFound)
         }
       }

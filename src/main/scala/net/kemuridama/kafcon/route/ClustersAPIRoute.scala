@@ -23,14 +23,14 @@ trait ClustersAPIRoute
   val route = pathPrefix("clusters") {
     pathEnd{
       get {
-        complete(APIResponse(Cluster(
+        complete(APIResponse(Some(Cluster(
           clusterName,
           zookeeperService.getAll,
           brokerService.getAll,
           topicService.getAll,
           topicService.getAll.map(_.partitions.size).foldLeft(0L)((sum, partitionCount) => sum + partitionCount),
           topicService.getAll.map(_.messageCount).foldLeft(0L)((sum, messageCount) => sum + messageCount)
-        )))
+        ))))
       }
     }
   }
