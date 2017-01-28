@@ -3,5 +3,5 @@ package net.kemuridama.kafcon.model
 case class APIError(
   errorCode: Option[Int] = None,
   message: Option[String] = None,
-  errors: Seq[APIErrorDetail]
+  errors: Seq[APIErrorDetail] = Seq.empty[APIErrorDetail]
 )
