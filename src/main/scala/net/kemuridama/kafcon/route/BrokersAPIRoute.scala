@@ -3,7 +3,7 @@ package net.kemuridama.kafcon.route
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.model.StatusCodes
 
-import net.kemuridama.kafcon.model.APIResponse
+import net.kemuridama.kafcon.model.{APIResponse, APIError}
 import net.kemuridama.kafcon.service.{UsesBrokerService, MixinBrokerService}
 import net.kemuridama.kafcon.protocol.{APIResponseJsonProtocol, BrokerJsonProtocol}
 
@@ -23,7 +23,7 @@ trait BrokersAPIRoute
         get {
           brokerService.get(id) match {
             case Some(broker) => complete(APIResponse(Some(broker)))
-            case _ => complete(StatusCodes.NotFound)
+            case _ => complete(StatusCodes.NotFound, APIResponse[Unit](error = Some(APIError(message = Some("Not found")))))
           }
         }
       }
