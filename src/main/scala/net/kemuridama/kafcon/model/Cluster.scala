@@ -6,5 +6,6 @@ case class Cluster(
   brokers: List[Broker],
   topics: List[Topic],
   partitionCount: Long,
-  messageCount: Long
+  messageCount: Long,
+  connectionState: ConnectionState
 )

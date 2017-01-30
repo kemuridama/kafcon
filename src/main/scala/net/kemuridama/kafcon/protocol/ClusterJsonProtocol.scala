@@ -5,8 +5,9 @@ import net.kemuridama.kafcon.model.Cluster
 trait ClusterJsonProtocol
   extends JsonProtocol
   with BrokerJsonProtocol
-  with TopicJsonProtocol {
+  with TopicJsonProtocol
+  with ConnectionStateJsonProtocol {
 
-  implicit val clusterFormat = jsonFormat6(Cluster)
+  implicit val clusterFormat = jsonFormat7(Cluster)
 
 }

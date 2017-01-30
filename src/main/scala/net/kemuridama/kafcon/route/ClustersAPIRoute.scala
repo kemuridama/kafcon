@@ -29,7 +29,8 @@ trait ClustersAPIRoute
           brokerService.getAll,
           topicService.getAll,
           topicService.getAll.map(_.partitions.size).foldLeft(0L)((sum, partitionCount) => sum + partitionCount),
-          topicService.getAll.map(_.messageCount).foldLeft(0L)((sum, messageCount) => sum + messageCount)
+          topicService.getAll.map(_.messageCount).foldLeft(0L)((sum, messageCount) => sum + messageCount),
+          zookeeperService.getConnectionState
         ))))
       }
     }
