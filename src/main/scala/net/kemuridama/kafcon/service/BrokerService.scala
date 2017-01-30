@@ -31,7 +31,8 @@ trait BrokerService
   def getAll: List[Broker] = brokers
 
   def fetchTopicMetadata(topicList: List[String]): List[TopicMetadata] = {
-    ClientUtils.fetchTopicMetadata(topicList.toSet, getBrokerEndPoints, "kafcon-topic-metadata-fetcher", 1000).topicsMetadata.toList
+    if (brokers.nonEmpty) ClientUtils.fetchTopicMetadata(topicList.toSet, getBrokerEndPoints, "kafcon-topic-metadata-fetcher", 1000).topicsMetadata.toList
+    else List.empty[TopicMetadata]
   }
 
   private def getBrokerEndPoints: List[BrokerEndPoint] = brokers.map(_.toBrokerEndPoint)
