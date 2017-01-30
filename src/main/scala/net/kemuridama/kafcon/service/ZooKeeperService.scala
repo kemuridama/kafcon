@@ -3,6 +3,7 @@ package net.kemuridama.kafcon.service
 import org.apache.zookeeper.{ZooKeeper, Watcher, WatchedEvent}
 import org.apache.zookeeper.data.Stat
 
+import net.kemuridama.kafcon.model.ConnectionState
 import net.kemuridama.kafcon.util.{UsesApplicationConfig, MixinApplicationConfig}
 
 trait ZooKeeperService
@@ -20,10 +21,28 @@ trait ZooKeeperService
   private lazy val zookeeperServers = applicationConfig.cluster.getStringList("zookeeperServers").toList
   private lazy val zookeeper = new ZooKeeper(zookeeperServers.mkString(","), sessionTimeout, watcher)
 
-  def getAll: List[String] = zookeeperServers
+  private var connectionState: ConnectionState = ConnectionState.Disconnected
 
-  def getChildren(path: String): List[String] = zookeeper.getChildren(path, false).toList
-  def getData(path: String): String = new String(zookeeper.getData(path, false, new Stat), charset)
+  def getAll: List[String] = zookeeperServers
+  def getConnectionState: ConnectionState = connectionState
+
+  def getChildren(path: String): List[String] = try {
+    zookeeper.getChildren(path, false).toList
+  } catch {
+    case _: Exception => {
+      connectionState = ConnectionState.Disconnected
+      List.empty[String]
+    }
+  }
+
+  def getData(path: String): String = try {
+    new String(zookeeper.getData(path, false, new Stat), charset)
+  } catch {
+    case _: Exception => {
+      connectionState = ConnectionState.Disconnected
+      ""
+    }
+  }
 
 }
 
