@@ -19,30 +19,49 @@ trait ZooKeeperService
   }
 
   private lazy val zookeeperServers = applicationConfig.cluster.getStringList("zookeeperServers").toList
-  private lazy val zookeeper = new ZooKeeper(zookeeperServers.mkString(","), sessionTimeout, watcher)
+  private var zookeeper: Option[ZooKeeper] = None
 
   private var connectionState: ConnectionState = ConnectionState.Disconnected
+
+  private def connect: Option[ZooKeeper] = {
+    connectionState = ConnectionState.Connected
+    Some(new ZooKeeper(zookeeperServers.mkString(","), sessionTimeout, watcher))
+  }
+
+  private def disconnect: Unit = {
+    connectionState = ConnectionState.Disconnected
+    zookeeper.map(_.close)
+  }
+
+  private def getConnection: Option[ZooKeeper] = zookeeper match {
+    case Some(zk) => Some(zk)
+    case _ => {
+      zookeeper = connect
+      zookeeper
+    }
+  }
+
+  private def withConnection[T](func: ZooKeeper => T): Option[T] = getConnection.flatMap { zk =>
+    try {
+      Some(func(zk))
+    } catch {
+      case _: Exception => {
+        disconnect
+        None
+      }
+    }
+  }
 
   def getAll: List[String] = zookeeperServers
   def getConnectionState: ConnectionState = connectionState
 
-  def getChildren(path: String): List[String] = try {
-    zookeeper.getChildren(path, false).toList
-  } catch {
-    case _: Exception => {
-      connectionState = ConnectionState.Disconnected
-      List.empty[String]
-    }
-  }
+  def getChildren(path: String): List[String] = withConnection { zk =>
+    zk.getChildren(path, false).toList
+  } getOrElse(List.empty[String])
 
-  def getData(path: String): String = try {
-    new String(zookeeper.getData(path, false, new Stat), charset)
-  } catch {
-    case _: Exception => {
-      connectionState = ConnectionState.Disconnected
-      ""
-    }
-  }
+  def getData(path: String): String = withConnection { zk =>
+    new String(zk.getData(path, false, new Stat), charset)
+  } getOrElse("")
 
 }
 
