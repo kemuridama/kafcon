@@ -6,7 +6,7 @@ import kafka.common.TopicAndPartition
 import net.kemuridama.kafcon.model.{Topic, Partition, PartitionOffset}
 
 trait TopicService
-  extends UsesZooKeeperService
+  extends UsesClusterService
   with UsesBrokerService
   with UsesConsumerService {
 
@@ -16,25 +16,27 @@ trait TopicService
   private var topics = List.empty[Topic]
 
   def update: Unit = {
-    val topicNames = zookeeperService.getChildren(topicsPath)
-    topics = brokerService.fetchTopicMetadata(topicNames).map { topicMetadata =>
-      val partitions = topicMetadata.partitionsMetadata.toList.map { partitionMetadata =>
-        Partition(
-          partitionMetadata.partitionId,
-          partitionMetadata.leader.map(_.id),
-          partitionMetadata.replicas.toList.map(_.id),
-          partitionMetadata.isr.toList.map(_.id),
-          getPartitionOffset(topicMetadata.topic, partitionMetadata)
-        )
-      } sortBy(_.id)
+    clusterService.getCluster(1).map { cluster =>
+      val topicNames = cluster.getAllTopics
+      topics = brokerService.fetchTopicMetadata(topicNames).map { topicMetadata =>
+        val partitions = topicMetadata.partitionsMetadata.toList.map { partitionMetadata =>
+          Partition(
+            partitionMetadata.partitionId,
+            partitionMetadata.leader.map(_.id),
+            partitionMetadata.replicas.toList.map(_.id),
+            partitionMetadata.isr.toList.map(_.id),
+            getPartitionOffset(topicMetadata.topic, partitionMetadata)
+          )
+        } sortBy(_.id)
 
-      Topic(
-        topicMetadata.topic,
-        partitions.flatMap(_.replicas).distinct,
-        partitions.map(_.replicas.size).max,
-        partitions.foldLeft(0L)((sum, partition) => sum + partition.getMessageCount),
-        partitions
-      )
+        Topic(
+          topicMetadata.topic,
+          partitions.flatMap(_.replicas).distinct,
+          partitions.map(_.replicas.size).max,
+          partitions.foldLeft(0L)((sum, partition) => sum + partition.getMessageCount),
+          partitions
+        )
+      }
     }
   }
 
@@ -58,7 +60,7 @@ trait TopicService
 
 private[service] object TopicService
   extends TopicService
-  with MixinZooKeeperService
+  with MixinClusterService
   with MixinBrokerService
   with MixinConsumerService
 

@@ -12,7 +12,7 @@ import net.kemuridama.kafcon.model.{Broker, ZooKeeperBroker}
 import net.kemuridama.kafcon.protocol.ZooKeeperBrokerJsonProtocol
 
 trait BrokerService
-  extends UsesZooKeeperService
+  extends UsesClusterService
   with ZooKeeperBrokerJsonProtocol {
 
   private val brokersPath = "/brokers/ids"
@@ -21,10 +21,9 @@ trait BrokerService
   private var brokers = List.empty[Broker]
 
   def update: Unit = {
-    brokers = zookeeperService.getChildren(brokersPath).map(_.toInt).map { id =>
-      val zkBroker = zookeeperService.getData(brokerPath(id)).parseJson.convertTo[ZooKeeperBroker]
-      zkBroker.toBroker(id)
-    }
+    brokers = clusterService.getCluster(1).map { cluster =>
+      cluster.getAllBrokers
+    } getOrElse(List.empty[Broker])
   }
 
   def get(id: Int): Option[Broker] = brokers.filter(_.id == id).headOption
@@ -41,7 +40,7 @@ trait BrokerService
 
 object BrokerService
   extends BrokerService
-  with MixinZooKeeperService
+  with MixinClusterService
 
 trait UsesBrokerService {
   val brokerService: BrokerService

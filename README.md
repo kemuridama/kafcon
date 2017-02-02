@@ -30,7 +30,7 @@ The current beta version of Kafcon provides features below:
 
 ## Future features
 
-* Web UI (probably SPA)
+* Control multi Kafka clusters
 * Control Kafka for cluster administrators
 * Server down detection
 

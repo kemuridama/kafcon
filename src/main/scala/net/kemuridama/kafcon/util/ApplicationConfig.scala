@@ -8,6 +8,7 @@ trait ApplicationConfig {
 
   lazy val server = config.getConfig("server")
   lazy val cluster = config.getConfig("cluster")
+  lazy val clusters = config.getConfigList("clusters")
 
 }
 
