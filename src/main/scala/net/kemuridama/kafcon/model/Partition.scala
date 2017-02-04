@@ -5,9 +5,17 @@ case class Partition(
   leader: Option[Int],
   replicas: List[Int],
   isr: List[Int],
-  offset: Option[PartitionOffset]
+  firstOffset: Option[Long],
+  lastOffset: Option[Long]
 ) {
 
-  def getMessageCount: Long = offset.map(_.getMessageCount).getOrElse(0L)
+  def getMessageCount: Long = {
+    (for {
+      first <- firstOffset
+      last <- lastOffset
+    } yield {
+      last - first
+    }).getOrElse(0L)
+  }
 
 }
