@@ -20,6 +20,8 @@ trait BrokerMetricsService
     brokerService.findAll(1).foreach { broker =>
       val metricsLog = broker.withMBeanServerConnection { mbsc =>
         BrokerMetricsLog(
+          clusterId       = 1,
+          brokerId        = broker.id,
           messageInPerSec = getMeterMetric(mbsc, MetricsType.MessagesInPerSec.toObjectName),
           bytesInPerSec   = getMeterMetric(mbsc, MetricsType.BytesInPerSec.toObjectName),
           bytesOutPerSec  = getMeterMetric(mbsc, MetricsType.BytesOutPerSec.toObjectName),
