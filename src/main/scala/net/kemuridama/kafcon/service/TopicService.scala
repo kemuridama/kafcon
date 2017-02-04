@@ -4,21 +4,21 @@ import kafka.api.PartitionMetadata
 import kafka.common.TopicAndPartition
 
 import net.kemuridama.kafcon.model.{Topic, Partition, PartitionOffset}
+import net.kemuridama.kafcon.repository.{UsesTopicRepository, MixinTopicRepository}
 
 trait TopicService
-  extends UsesClusterService
+  extends UsesTopicRepository
+  with UsesClusterService
   with UsesBrokerService
   with UsesConsumerService {
 
   private val topicsPath = "/brokers/topics"
   private def topicPath(name: String) = "/brokers/topics/%s".format(name)
 
-  private var topics = List.empty[Topic]
-
   def update: Unit = {
     clusterService.find(1).map { cluster =>
       val topicNames = cluster.getAllTopics
-      topics = brokerService.fetchTopicMetadata(1, topicNames).map { topicMetadata =>
+      brokerService.fetchTopicMetadata(1, topicNames).map { topicMetadata =>
         val partitions = topicMetadata.partitionsMetadata.toList.map { partitionMetadata =>
           Partition(
             partitionMetadata.partitionId,
@@ -29,19 +29,20 @@ trait TopicService
           )
         } sortBy(_.id)
 
-        Topic(
+        topicRepository.insert(Topic(
           topicMetadata.topic,
+          1,
           partitions.flatMap(_.replicas).distinct,
           partitions.map(_.replicas.size).max,
           partitions.foldLeft(0L)((sum, partition) => sum + partition.getMessageCount),
           partitions
-        )
+        ))
       }
     }
   }
 
-  def getAll: List[Topic] = topics
-  def get(name: String): Option[Topic] = topics.find(_.name == name)
+  def findAll(clusterId: Int): List[Topic] = topicRepository.findAll(clusterId)
+  def find(clusterId: Int, name: String): Option[Topic] = topicRepository.find(clusterId, name)
 
   private def getPartitionOffset(name: String, partitionMetadata: PartitionMetadata): Option[PartitionOffset] = {
     val topicAndPartition = new TopicAndPartition(name, partitionMetadata.partitionId)
@@ -60,6 +61,7 @@ trait TopicService
 
 private[service] object TopicService
   extends TopicService
+  with MixinTopicRepository
   with MixinClusterService
   with MixinBrokerService
   with MixinConsumerService

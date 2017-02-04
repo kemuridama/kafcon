@@ -29,9 +29,9 @@ trait ClustersAPIRoute
             cluster.name,
             cluster.zookeepers,
             brokerService.findAll(cluster.id),
-            topicService.getAll,
-            topicService.getAll.map(_.partitions.size).foldLeft(0L)((sum, partitionCount) => sum + partitionCount),
-            topicService.getAll.map(_.messageCount).foldLeft(0L)((sum, messageCount) => sum + messageCount),
+            topicService.findAll(1),
+            topicService.findAll(1).map(_.partitions.size).foldLeft(0L)((sum, partitionCount) => sum + partitionCount),
+            topicService.findAll(1).map(_.messageCount).foldLeft(0L)((sum, messageCount) => sum + messageCount),
             cluster.getConnectionState
           ))))
           case _ => complete(StatusCodes.NotFound, APIResponse[Unit](error = Some(APIError(message = Some("Not found")))))

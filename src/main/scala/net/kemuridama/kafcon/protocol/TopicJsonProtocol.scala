@@ -6,6 +6,6 @@ trait TopicJsonProtocol
   extends JsonProtocol
   with PartitionJsonProtocol {
 
-  implicit val topicFormat = jsonFormat5(Topic)
+  implicit val topicFormat = jsonFormat6(Topic)
 
 }

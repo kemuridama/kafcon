@@ -15,13 +15,13 @@ trait TopicsAPIRoute
   val route = pathPrefix("topics") {
     pathEnd {
       get {
-        complete(APIResponse(Some(topicService.getAll)))
+        complete(APIResponse(Some(topicService.findAll(1))))
       }
     } ~
     pathPrefix(Segment) { name =>
       pathEnd {
         get {
-          topicService.get(name) match {
+          topicService.find(1, name) match {
             case Some(topic) => complete(APIResponse(Some(topic)))
             case _ => complete(StatusCodes.NotFound, APIResponse[Unit](error = Some(APIError(message = Some("Not found")))))
           }
