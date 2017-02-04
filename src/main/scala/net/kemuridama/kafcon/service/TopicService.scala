@@ -1,5 +1,6 @@
 package net.kemuridama.kafcon.service
 
+import kafka.client.ClientUtils
 import kafka.api.PartitionMetadata
 import kafka.common.TopicAndPartition
 
@@ -12,30 +13,27 @@ trait TopicService
   with UsesBrokerService
   with UsesConsumerService {
 
-  private val topicsPath = "/brokers/topics"
-  private def topicPath(name: String) = "/brokers/topics/%s".format(name)
-
   def update: Unit = {
-    clusterService.find(1).map { cluster =>
-      val topicNames = cluster.getAllTopics
-      brokerService.fetchTopicMetadata(1, topicNames).map { topicMetadata =>
+    clusterService.all.foreach { cluster =>
+      val topicNames = cluster.getAllTopics.toSet
+      ClientUtils.fetchTopicMetadata(topicNames, brokerService.findAll(cluster.id).map(_.toBrokerEndPoint), "kafcon-topic-metadata-fetcher", 1000).topicsMetadata.foreach { topicMetadata =>
         val partitions = topicMetadata.partitionsMetadata.toList.map { partitionMetadata =>
           Partition(
-            partitionMetadata.partitionId,
-            partitionMetadata.leader.map(_.id),
-            partitionMetadata.replicas.toList.map(_.id),
-            partitionMetadata.isr.toList.map(_.id),
-            getPartitionOffset(topicMetadata.topic, partitionMetadata)
+            id       = partitionMetadata.partitionId,
+            leader   = partitionMetadata.leader.map(_.id),
+            replicas = partitionMetadata.replicas.toList.map(_.id),
+            isr      = partitionMetadata.isr.toList.map(_.id),
+            offset   = getPartitionOffset(topicMetadata.topic, partitionMetadata)
           )
         } sortBy(_.id)
 
         topicRepository.insert(Topic(
-          topicMetadata.topic,
-          1,
-          partitions.flatMap(_.replicas).distinct,
-          partitions.map(_.replicas.size).max,
-          partitions.foldLeft(0L)((sum, partition) => sum + partition.getMessageCount),
-          partitions
+          name              = topicMetadata.topic,
+          clusterId         = cluster.id,
+          brokers           = partitions.flatMap(_.replicas).distinct,
+          replicationFactor = partitions.map(_.replicas.size).max,
+          messageCount      = partitions.foldLeft(0L)((sum, partition) => sum + partition.getMessageCount),
+          partitions        = partitions
         ))
       }
     }
