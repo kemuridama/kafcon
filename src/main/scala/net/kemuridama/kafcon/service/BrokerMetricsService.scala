@@ -7,7 +7,6 @@ import net.kemuridama.kafcon.util.{UsesApplicationConfig, MixinApplicationConfig
 
 trait BrokerMetricsService
   extends UsesBrokerService
-  with UsesMBeanServerConnectionService
   with UsesApplicationConfig {
 
   import collection.JavaConversions._
@@ -18,13 +17,13 @@ trait BrokerMetricsService
   private var metricsList = List.empty[BrokerMetrics]
 
   def update: Unit = {
-    brokerService.findAll(1).map { broker =>
-      val metricsLog = mbeanServerConnectionService.get(broker.id).map { mbsc =>
+    brokerService.findAll(1).foreach { broker =>
+      val metricsLog = broker.withMBeanServerConnection { mbsc =>
         BrokerMetricsLog(
-          getMeterMetric(mbsc, MetricsType.MessagesInPerSec.toObjectName),
-          getMeterMetric(mbsc, MetricsType.BytesInPerSec.toObjectName),
-          getMeterMetric(mbsc, MetricsType.BytesOutPerSec.toObjectName),
-          getSystemMetrics(mbsc)
+          messageInPerSec = getMeterMetric(mbsc, MetricsType.MessagesInPerSec.toObjectName),
+          bytesInPerSec   = getMeterMetric(mbsc, MetricsType.BytesInPerSec.toObjectName),
+          bytesOutPerSec  = getMeterMetric(mbsc, MetricsType.BytesOutPerSec.toObjectName),
+          system          = getSystemMetrics(mbsc)
         )
       }
 
@@ -81,7 +80,6 @@ trait BrokerMetricsService
 private[service] object BrokerMetricsService
   extends BrokerMetricsService
   with MixinBrokerService
-  with MixinMBeanServerConnectionService
   with MixinApplicationConfig
 
 trait UsesBrokerMetricsService {
