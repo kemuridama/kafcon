@@ -7,6 +7,6 @@ trait BrokerMetricsLogJsonProtocol
   with MeterMetricsJsonProtocol
   with SystemMetricsJsonProtocol {
 
-  implicit def brokerMetricsLogFormat = jsonFormat5(BrokerMetricsLog)
+  implicit def brokerMetricsLogFormat = jsonFormat7(BrokerMetricsLog)
 
 }

@@ -17,18 +17,13 @@ trait BrokerMetricsAPIRoute
     pathPrefix("metrics") {
       pathEnd {
         get {
-          complete(APIResponse(Some(brokerMetricsService.getAll)))
-        }
-      } ~
-      path("combined") {
-        get {
-          complete(APIResponse(Some(brokerMetricsService.getCombined)))
+          complete(APIResponse(Some(brokerMetricsService.findByClusterId(1))))
         }
       }
     } ~
     path(IntNumber / "metrics") { id =>
       get {
-        brokerMetricsService.get(id) match {
+        brokerMetricsService.findByBrokerId(1, id) match {
           case Some(metrics) => complete(APIResponse(Some(metrics)))
           case _ => complete(StatusCodes.NotFound, APIResponse[Unit](error = Some(APIError(message = Some("Not found")))))
         }

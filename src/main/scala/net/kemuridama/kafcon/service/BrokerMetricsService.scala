@@ -3,22 +3,18 @@ package net.kemuridama.kafcon.service
 import javax.management._
 
 import net.kemuridama.kafcon.model.{BrokerMetrics, CombinedBrokerMetrics, BrokerMetricsLog, CombinedBrokerMetricsLog, SystemMetrics, MeterMetric, MetricsType}
+import net.kemuridama.kafcon.repository.{UsesBrokerMetricsLogRepository, MixinBrokerMetricsLogRepository}
 import net.kemuridama.kafcon.util.{UsesApplicationConfig, MixinApplicationConfig}
 
 trait BrokerMetricsService
-  extends UsesBrokerService
-  with UsesApplicationConfig {
+  extends UsesBrokerMetricsLogRepository
+  with UsesBrokerService {
 
-  import collection.JavaConversions._
   import collection.JavaConverters._
-
-  private lazy val maxLogSize = applicationConfig.cluster.getInt("metricsMaxLogSize")
-
-  private var metricsList = List.empty[BrokerMetrics]
 
   def update: Unit = {
     brokerService.findAll(1).foreach { broker =>
-      val metricsLog = broker.withMBeanServerConnection { mbsc =>
+      broker.withMBeanServerConnection { mbsc =>
         BrokerMetricsLog(
           clusterId       = 1,
           brokerId        = broker.id,
@@ -27,24 +23,32 @@ trait BrokerMetricsService
           bytesOutPerSec  = getMeterMetric(mbsc, MetricsType.BytesOutPerSec.toObjectName),
           system          = getSystemMetrics(mbsc)
         )
-      }
-
-      metricsList = get(broker.id).fold(metricsList :+ BrokerMetrics(broker.id, metricsLog, List(metricsLog))) { metrics =>
-        val logs = if (metrics.logs.size >= maxLogSize) metrics.logs.init else metrics.logs
-        metricsList.filter(_.brokerId != broker.id) :+ metrics.copy(latest = metricsLog, logs = metricsLog +: logs)
+      } map { log =>
+        brokerMetricsLogRepository.insert(log)
       }
     }
   }
 
-  def getAll: List[BrokerMetrics] = metricsList
-  def get(brokerId: Int): Option[BrokerMetrics] = metricsList.find(_.brokerId == brokerId)
+  def findByClusterId(clusterId: Int): List[BrokerMetrics] = {
+    brokerService.findAll(clusterId).map { broker =>
+      val brokerMetricsLogs = brokerMetricsLogRepository.findByBrokerId(clusterId, broker.id)
+      BrokerMetrics(
+        brokerId = broker.id,
+        latest   = brokerMetricsLogs.headOption,
+        logs     = brokerMetricsLogs
+      )
+    }
+  }
 
-  def getCombined: CombinedBrokerMetrics = {
-    val combinedMetricsLogs = metricsList.map(_.logs).transpose.map(_.flatten.foldLeft(new CombinedBrokerMetricsLog)((c, l) => c + l))
-    CombinedBrokerMetrics(
-      combinedMetricsLogs.head,
-      combinedMetricsLogs
-    )
+  def findByBrokerId(clusterId: Int, brokerId: Int): Option[BrokerMetrics] = {
+    brokerService.find(clusterId, brokerId).map { broker =>
+      val brokerMetricsLogs = brokerMetricsLogRepository.findByBrokerId(clusterId, brokerId)
+      BrokerMetrics(
+        brokerId = brokerId,
+        latest   = brokerMetricsLogs.headOption,
+        logs     = brokerMetricsLogs
+      )
+    }
   }
 
   private def getMeterMetric(mbsc: MBeanServerConnection, objectName: ObjectName): MeterMetric = {
@@ -81,8 +85,8 @@ trait BrokerMetricsService
 
 private[service] object BrokerMetricsService
   extends BrokerMetricsService
+  with MixinBrokerMetricsLogRepository
   with MixinBrokerService
-  with MixinApplicationConfig
 
 trait UsesBrokerMetricsService {
   val brokerMetricsService: BrokerMetricsService
