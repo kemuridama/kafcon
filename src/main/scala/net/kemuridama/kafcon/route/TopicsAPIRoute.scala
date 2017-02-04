@@ -1,15 +1,14 @@
 package net.kemuridama.kafcon.route
 
-import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.model.StatusCodes
 
-import net.kemuridama.kafcon.model.{APIResponse, APIError}
-import net.kemuridama.kafcon.protocol.{APIResponseJsonProtocol, TopicJsonProtocol}
+import net.kemuridama.kafcon.model.APIResponse
+import net.kemuridama.kafcon.protocol.TopicJsonProtocol
 import net.kemuridama.kafcon.service.{UsesTopicService, MixinTopicService}
 
 trait TopicsAPIRoute
-  extends UsesTopicService
-  with APIResponseJsonProtocol
+  extends APIRoute
+  with UsesTopicService
   with TopicJsonProtocol {
 
   val route = pathPrefix("topics") {
@@ -23,7 +22,7 @@ trait TopicsAPIRoute
         get {
           topicService.find(1, name) match {
             case Some(topic) => complete(APIResponse(Some(topic)))
-            case _ => complete(StatusCodes.NotFound, APIResponse[Unit](error = Some(APIError(message = Some("Not found")))))
+            case _ => complete(StatusCodes.NotFound, errorMessage("Not found"))
           }
         }
       }

@@ -1,15 +1,14 @@
 package net.kemuridama.kafcon.route
 
-import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.model.StatusCodes
 
-import net.kemuridama.kafcon.model.{APIResponse, APIError}
+import net.kemuridama.kafcon.model.APIResponse
 import net.kemuridama.kafcon.service.{UsesBrokerService, MixinBrokerService}
-import net.kemuridama.kafcon.protocol.{APIResponseJsonProtocol, BrokerJsonProtocol}
+import net.kemuridama.kafcon.protocol.BrokerJsonProtocol
 
 trait BrokersAPIRoute
-  extends UsesBrokerService
-  with APIResponseJsonProtocol
+  extends APIRoute
+  with UsesBrokerService
   with BrokerJsonProtocol {
 
   val route = pathPrefix("brokers") {
@@ -23,7 +22,7 @@ trait BrokersAPIRoute
         get {
           brokerService.find(1, id) match {
             case Some(broker) => complete(APIResponse(Some(broker)))
-            case _ => complete(StatusCodes.NotFound, APIResponse[Unit](error = Some(APIError(message = Some("Not found")))))
+            case _ => complete(StatusCodes.NotFound, errorMessage("Not found"))
           }
         }
       }

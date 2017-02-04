@@ -1,24 +1,19 @@
 package net.kemuridama.kafcon.route
 
-import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.model.StatusCodes
 
-import net.kemuridama.kafcon.model.{APIResponse, APIError, ClusterResponseData}
+import net.kemuridama.kafcon.model.{APIResponse, ClusterResponseData}
 import net.kemuridama.kafcon.service.{UsesClusterService, MixinClusterService}
 import net.kemuridama.kafcon.service.{UsesBrokerService, MixinBrokerService}
 import net.kemuridama.kafcon.service.{UsesTopicService, MixinTopicService}
-import net.kemuridama.kafcon.util.{UsesApplicationConfig, MixinApplicationConfig}
-import net.kemuridama.kafcon.protocol.{APIResponseJsonProtocol, ClusterResponseDataJsonProtocol}
+import net.kemuridama.kafcon.protocol.ClusterResponseDataJsonProtocol
 
 trait ClustersAPIRoute
-  extends UsesClusterService
+  extends APIRoute
+  with UsesClusterService
   with UsesBrokerService
   with UsesTopicService
-  with UsesApplicationConfig
-  with APIResponseJsonProtocol
   with ClusterResponseDataJsonProtocol {
-
-  private lazy val clusterName = applicationConfig.cluster.getString("name")
 
   val route = pathPrefix("clusters") {
     pathEnd{
@@ -34,7 +29,7 @@ trait ClustersAPIRoute
             topicService.findAll(1).map(_.messageCount).foldLeft(0L)((sum, messageCount) => sum + messageCount),
             cluster.getConnectionState
           ))))
-          case _ => complete(StatusCodes.NotFound, APIResponse[Unit](error = Some(APIError(message = Some("Not found")))))
+          case _ => complete(StatusCodes.NotFound, errorMessage("Not found"))
         }
       }
     }
@@ -47,7 +42,6 @@ private[route] object ClustersAPIRoute
   with MixinClusterService
   with MixinBrokerService
   with MixinTopicService
-  with MixinApplicationConfig
 
 trait UsesClustersAPIRoute {
   val clustersAPIRoute: ClustersAPIRoute
