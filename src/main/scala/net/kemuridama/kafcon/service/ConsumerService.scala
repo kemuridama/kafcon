@@ -9,7 +9,7 @@ trait ConsumerService
 
   def get(brokerId: Int): Option[SimpleConsumer] = {
     consumers.get(brokerId).orElse {
-      brokerService.get(brokerId).map { broker =>
+      brokerService.find(1, brokerId).map { broker =>
         val consumer = new SimpleConsumer(broker.host, broker.port, 3000, 65536, "kafcon-consumer")
         consumers += brokerId -> consumer
         consumer

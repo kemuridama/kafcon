@@ -11,8 +11,9 @@ case class ZooKeeperBroker(
   timestamp: String
 ) {
 
-  def toBroker(id: Int) = Broker(
+  def toBroker(clusterId: Int, id: Int) = Broker(
     id = id,
+    clusterId = clusterId,
     host = host,
     port = port,
     jmxPort = jmx_port,

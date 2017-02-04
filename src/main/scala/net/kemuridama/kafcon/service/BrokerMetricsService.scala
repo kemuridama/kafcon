@@ -18,7 +18,7 @@ trait BrokerMetricsService
   private var metricsList = List.empty[BrokerMetrics]
 
   def update: Unit = {
-    brokerService.getAll.map { broker =>
+    brokerService.findAll(1).map { broker =>
       val metricsLog = mbeanServerConnectionService.get(broker.id).map { mbsc =>
         BrokerMetricsLog(
           getMeterMetric(mbsc, MetricsType.MessagesInPerSec.toObjectName),

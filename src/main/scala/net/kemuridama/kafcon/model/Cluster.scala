@@ -34,7 +34,7 @@ case class Cluster(
   def getAllBrokers: List[Broker] = withSession { zk =>
     zk.getAllBrokersInCluster.toList.map { broker =>
       val (data, stat) = zk.readDataMaybeNull(brokerPath(broker.id))
-      data.map(_.parseJson.convertTo[ZooKeeperBroker].toBroker(broker.id))
+      data.map(_.parseJson.convertTo[ZooKeeperBroker].toBroker(id, broker.id))
     } flatten
   } getOrElse(List.empty[Broker])
 

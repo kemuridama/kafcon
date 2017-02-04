@@ -5,6 +5,7 @@ import org.joda.time.DateTime
 
 case class Broker(
   id: Int,
+  clusterId: Int,
   host: String,
   port: Int,
   jmxPort: Option[Int],

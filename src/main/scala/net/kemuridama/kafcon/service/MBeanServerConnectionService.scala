@@ -13,7 +13,7 @@ trait MBeanServerConnectionService
   def get(brokerId: Int): Option[MBeanServerConnection] = {
     connections.get(brokerId).orElse {
       for {
-        broker <- brokerService.get(brokerId)
+        broker <- brokerService.find(1, brokerId)
         jmxServiceUrl <- getJMXServiceURL(broker)
       } yield {
         val mbsc = JMXConnectorFactory.connect(jmxServiceUrl).getMBeanServerConnection

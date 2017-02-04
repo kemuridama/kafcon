@@ -10,36 +10,35 @@ import kafka.api.TopicMetadata
 
 import net.kemuridama.kafcon.model.{Broker, ZooKeeperBroker}
 import net.kemuridama.kafcon.protocol.ZooKeeperBrokerJsonProtocol
+import net.kemuridama.kafcon.repository.{UsesBrokerRepository, MixinBrokerRepository}
 
 trait BrokerService
-  extends UsesClusterService
+  extends UsesBrokerRepository
+  with UsesClusterService
   with ZooKeeperBrokerJsonProtocol {
 
   private val brokersPath = "/brokers/ids"
   private def brokerPath(id: Int) = "/brokers/ids/%d".format(id)
 
-  private var brokers = List.empty[Broker]
-
   def update: Unit = {
-    brokers = clusterService.find(1).map { cluster =>
-      cluster.getAllBrokers
-    } getOrElse(List.empty[Broker])
+    clusterService.find(1).map { cluster =>
+      brokerRepository.insert(cluster.getAllBrokers)
+    }
   }
 
-  def get(id: Int): Option[Broker] = brokers.filter(_.id == id).headOption
-  def getAll: List[Broker] = brokers
+  def find(clusterId: Int, id: Int): Option[Broker] = brokerRepository.find(clusterId, id)
+  def findAll(clusterId: Int): List[Broker] = brokerRepository.findAll(clusterId)
 
-  def fetchTopicMetadata(topicList: List[String]): List[TopicMetadata] = {
-    if (brokers.nonEmpty) ClientUtils.fetchTopicMetadata(topicList.toSet, getBrokerEndPoints, "kafcon-topic-metadata-fetcher", 1000).topicsMetadata.toList
+  def fetchTopicMetadata(clusterId: Int, topicList: List[String]): List[TopicMetadata] = {
+    if (findAll(clusterId).nonEmpty) ClientUtils.fetchTopicMetadata(topicList.toSet, clusterService.getBrokerEndPoints(clusterId), "kafcon-topic-metadata-fetcher", 1000).topicsMetadata.toList
     else List.empty[TopicMetadata]
   }
-
-  private def getBrokerEndPoints: List[BrokerEndPoint] = brokers.map(_.toBrokerEndPoint)
 
 }
 
 object BrokerService
   extends BrokerService
+  with MixinBrokerRepository
   with MixinClusterService
 
 trait UsesBrokerService {

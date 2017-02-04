@@ -4,6 +4,6 @@ import net.kemuridama.kafcon.model.Broker
 
 trait BrokerJsonProtocol extends JsonProtocol {
 
-  implicit val brokerFormat = jsonFormat5(Broker)
+  implicit val brokerFormat = jsonFormat6(Broker)
 
 }

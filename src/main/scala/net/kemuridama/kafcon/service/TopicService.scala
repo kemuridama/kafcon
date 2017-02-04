@@ -18,7 +18,7 @@ trait TopicService
   def update: Unit = {
     clusterService.find(1).map { cluster =>
       val topicNames = cluster.getAllTopics
-      topics = brokerService.fetchTopicMetadata(topicNames).map { topicMetadata =>
+      topics = brokerService.fetchTopicMetadata(1, topicNames).map { topicMetadata =>
         val partitions = topicMetadata.partitionsMetadata.toList.map { partitionMetadata =>
           Partition(
             partitionMetadata.partitionId,

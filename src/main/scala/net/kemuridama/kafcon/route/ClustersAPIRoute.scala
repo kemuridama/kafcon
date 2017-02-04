@@ -28,7 +28,7 @@ trait ClustersAPIRoute
             cluster.id,
             cluster.name,
             cluster.zookeepers,
-            brokerService.getAll,
+            brokerService.findAll(cluster.id),
             topicService.getAll,
             topicService.getAll.map(_.partitions.size).foldLeft(0L)((sum, partitionCount) => sum + partitionCount),
             topicService.getAll.map(_.messageCount).foldLeft(0L)((sum, messageCount) => sum + messageCount),
