@@ -21,7 +21,7 @@ trait BrokerService
   private var brokers = List.empty[Broker]
 
   def update: Unit = {
-    brokers = clusterService.getCluster(1).map { cluster =>
+    brokers = clusterService.find(1).map { cluster =>
       cluster.getAllBrokers
     } getOrElse(List.empty[Broker])
   }

@@ -8,6 +8,6 @@ trait ClusterResponseDataJsonProtocol
   with TopicJsonProtocol
   with ConnectionStateJsonProtocol {
 
-  implicit val clusterResponseDataFormat = jsonFormat7(ClusterResponseData)
+  implicit val clusterResponseDataFormat = jsonFormat8(ClusterResponseData)
 
 }

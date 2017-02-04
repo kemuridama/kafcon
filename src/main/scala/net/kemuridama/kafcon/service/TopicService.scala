@@ -16,7 +16,7 @@ trait TopicService
   private var topics = List.empty[Topic]
 
   def update: Unit = {
-    clusterService.getCluster(1).map { cluster =>
+    clusterService.find(1).map { cluster =>
       val topicNames = cluster.getAllTopics
       topics = brokerService.fetchTopicMetadata(topicNames).map { topicMetadata =>
         val partitions = topicMetadata.partitionsMetadata.toList.map { partitionMetadata =>

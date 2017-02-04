@@ -23,8 +23,9 @@ trait ClustersAPIRoute
   val route = pathPrefix("clusters") {
     pathEnd{
       get {
-        clusterService.getCluster(1) match {
+        clusterService.find(1) match {
           case Some(cluster) => complete(APIResponse(Some(ClusterResponseData(
+            cluster.id,
             cluster.name,
             cluster.zookeepers,
             brokerService.getAll,

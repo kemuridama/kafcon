@@ -2,12 +2,13 @@ package net.kemuridama.kafcon
 
 import org.quartz._
 
-import net.kemuridama.kafcon.service.{MixinSchedulerService, MixinBrokerService, MixinBrokerMetricsService, MixinTopicService}
+import net.kemuridama.kafcon.service._
 import net.kemuridama.kafcon.util.MixinApplicationConfig
 
 object kafcon
   extends App
   with MixinKafconServer
+  with MixinClusterService
   with MixinSchedulerService
   with MixinBrokerService
   with MixinBrokerMetricsService
@@ -17,6 +18,7 @@ object kafcon
   lazy val updateInterval = applicationConfig.cluster.getInt("metricsMaxLogSize")
 
   // Setup scheduler for updating information and metrics
+  clusterService.init
   val job = JobBuilder.newJob((new Job {
     def execute(context: JobExecutionContext) = {
       brokerService.update

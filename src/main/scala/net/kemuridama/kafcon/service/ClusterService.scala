@@ -1,29 +1,33 @@
 package net.kemuridama.kafcon.service
 
 import net.kemuridama.kafcon.model.Cluster
+import net.kemuridama.kafcon.repository.{UsesClusterRepository, MixinClusterRepository}
 import net.kemuridama.kafcon.util.{UsesApplicationConfig, MixinApplicationConfig}
 
 trait ClusterService
-  extends UsesApplicationConfig {
+  extends UsesClusterRepository
+  with UsesApplicationConfig {
 
   import collection.JavaConversions._
 
-  private lazy val clusters: List[Cluster] = {
+  def init = {
     applicationConfig.clusters.toList.zipWithIndex.map { case (config, index) =>
-      Cluster(
+      clusterRepository.insert(Cluster(
         index + 1,
         config.getString("name"),
         config.getStringList("zookeepers").toList
-      )
+      ))
     }
   }
 
-  def getCluster(id: Int = 1): Option[Cluster] = clusters.filter(_.id == id).headOption
+  def all: List[Cluster] = clusterRepository.all
+  def find(id: Int = 1): Option[Cluster] = clusterRepository.find(id)
 
 }
 
 private[service] object ClusterService
   extends ClusterService
+  with MixinClusterRepository
   with MixinApplicationConfig
 
 trait UsesClusterService {
