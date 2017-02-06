@@ -12,17 +12,17 @@ trait BrokerMetricsAPIRoute
   with BrokerMetricsJsonProtocol
   with CombinedBrokerMetricsJsonProtocol {
 
-  val route = pathPrefix("brokers") {
+  val route = pathPrefix("clusters" / IntNumber / "brokers") { clusterId =>
     pathPrefix("metrics") {
       pathEnd {
         get {
-          complete(APIResponse(Some(brokerMetricsService.findByClusterId(1))))
+          complete(APIResponse(Some(brokerMetricsService.findByClusterId(clusterId))))
         }
       }
     } ~
     path(IntNumber / "metrics") { id =>
       get {
-        brokerMetricsService.findByBrokerId(1, id) match {
+        brokerMetricsService.findByBrokerId(clusterId, id) match {
           case Some(metrics) => complete(APIResponse(Some(metrics)))
           case _ => complete(StatusCodes.NotFound, errorMessage("Not found"))
         }

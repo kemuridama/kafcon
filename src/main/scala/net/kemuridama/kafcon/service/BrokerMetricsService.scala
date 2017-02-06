@@ -13,10 +13,10 @@ trait BrokerMetricsService
   import collection.JavaConverters._
 
   def update: Unit = {
-    brokerService.findAll(1).foreach { broker =>
+    brokerService.all.foreach { broker =>
       broker.withMBeanServerConnection { mbsc =>
         BrokerMetricsLog(
-          clusterId       = 1,
+          clusterId       = broker.clusterId,
           brokerId        = broker.id,
           messageInPerSec = getMeterMetric(mbsc, MetricsType.MessagesInPerSec.toObjectName),
           bytesInPerSec   = getMeterMetric(mbsc, MetricsType.BytesInPerSec.toObjectName),

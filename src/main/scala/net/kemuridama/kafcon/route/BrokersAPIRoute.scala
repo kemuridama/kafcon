@@ -11,16 +11,16 @@ trait BrokersAPIRoute
   with UsesBrokerService
   with BrokerJsonProtocol {
 
-  val route = pathPrefix("brokers") {
+  val route = pathPrefix("clusters" / IntNumber / "brokers") { clusterId =>
     pathEnd {
       get {
-        complete(APIResponse(Some(brokerService.findAll(1))))
+        complete(APIResponse(Some(brokerService.findAll(clusterId))))
       }
     } ~
     pathPrefix(IntNumber) { id =>
       pathEnd {
         get {
-          brokerService.find(1, id) match {
+          brokerService.find(clusterId, id) match {
             case Some(broker) => complete(APIResponse(Some(broker)))
             case _ => complete(StatusCodes.NotFound, errorMessage("Not found"))
           }

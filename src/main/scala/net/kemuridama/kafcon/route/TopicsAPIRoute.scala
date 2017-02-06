@@ -11,16 +11,16 @@ trait TopicsAPIRoute
   with UsesTopicService
   with TopicJsonProtocol {
 
-  val route = pathPrefix("topics") {
+  val route = pathPrefix("clusters" / IntNumber / "topics") { clusterId =>
     pathEnd {
       get {
-        complete(APIResponse(Some(topicService.findAll(1))))
+        complete(APIResponse(Some(topicService.findAll(clusterId))))
       }
     } ~
     pathPrefix(Segment) { name =>
       pathEnd {
         get {
-          topicService.find(1, name) match {
+          topicService.find(clusterId, name) match {
             case Some(topic) => complete(APIResponse(Some(topic)))
             case _ => complete(StatusCodes.NotFound, errorMessage("Not found"))
           }

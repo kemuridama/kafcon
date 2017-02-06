@@ -8,11 +8,12 @@ trait BrokerService
   with UsesClusterService {
 
   def update: Unit = {
-    clusterService.find(1).map { cluster =>
+    clusterService.all.map { cluster =>
       brokerRepository.insert(cluster.getAllBrokers)
     }
   }
 
+  def all: List[Broker] = brokerRepository.all
   def find(clusterId: Int, id: Int): Option[Broker] = brokerRepository.find(clusterId, id)
   def findAll(clusterId: Int): List[Broker] = brokerRepository.findAll(clusterId)
 

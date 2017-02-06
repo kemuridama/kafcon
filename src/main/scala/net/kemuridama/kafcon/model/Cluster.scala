@@ -42,4 +42,17 @@ case class Cluster(
     zk.getAllTopics.toList
   } getOrElse(List.empty[String])
 
+  def toClusterResponseData(brokers: List[Broker], topics: List[Topic]): ClusterResponseData = {
+    ClusterResponseData(
+      id              = id,
+      name            = name,
+      zookeepers      = zookeepers,
+      brokers         = brokers,
+      topics          = topics,
+      partitionCount  = topics.map(_.partitions.size).sum,
+      messageCount    = topics.map(_.messageCount).sum,
+      connectionState = getConnectionState
+    )
+  }
+
 }

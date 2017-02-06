@@ -12,6 +12,8 @@ trait BrokerRepository {
     }
   }
 
+  def all: List[Broker] = brokers
+
   def findAll(clusterId: Int): List[Broker] = brokers.filter(_.clusterId == clusterId)
 
   def find(clusterId: Int, id: Int): Option[Broker] = findAll(clusterId).find(_.id == id)
