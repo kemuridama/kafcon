@@ -18,7 +18,7 @@ case class Cluster(
 
   private def brokerPath(id: Int) = "/brokers/ids/%d".format(id)
 
-  private def withSession[T](func: ZkUtils => T): Option[T] = {
+  def withZkUtils[T](func: ZkUtils => T): Option[T] = {
     try {
       val zkUtils = ZkUtils(zookeepers.mkString(","), sessionTimeout, connectionTimeout, false)
       val ret = func(zkUtils)
@@ -31,14 +31,14 @@ case class Cluster(
 
   def getConnectionState: ConnectionState = connectionState
 
-  def getAllBrokers: List[Broker] = withSession { zk =>
+  def getAllBrokers: List[Broker] = withZkUtils { zk =>
     zk.getAllBrokersInCluster.toList.map { broker =>
       val (data, stat) = zk.readDataMaybeNull(brokerPath(broker.id))
       data.map(_.parseJson.convertTo[ZooKeeperBroker].toBroker(id, broker.id))
     } flatten
   } getOrElse(List.empty[Broker])
 
-  def getAllTopics: List[String] = withSession { zk =>
+  def getAllTopics: List[String] = withZkUtils { zk =>
     zk.getAllTopics.toList
   } getOrElse(List.empty[String])
 
