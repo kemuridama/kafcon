@@ -14,23 +14,30 @@ trait TopicService
 
   def update: Unit = {
     clusterService.all.foreach { cluster =>
-      val topicNames = cluster.getAllTopics.toSet
-      ClientUtils.fetchTopicMetadata(topicNames, brokerService.findAll(cluster.id).map(_.toBrokerEndPoint), "kafcon-topic-metadata-fetcher", 1000).topicsMetadata.foreach { topicMetadata =>
-        val partitions = fetchPartitions(cluster.id, topicMetadata)
-        topicRepository.insert(Topic(
-          name              = topicMetadata.topic,
-          clusterId         = cluster.id,
-          brokers           = partitions.flatMap(_.replicas).distinct,
-          replicationFactor = partitions.map(_.replicas.size).max,
-          messageCount      = partitions.foldLeft(0L)((sum, partition) => sum + partition.getMessageCount),
-          partitions        = partitions
-        ))
+      val topicNames = cluster.getAllTopics
+      fetchTopics(cluster.id, topicNames).foreach { topic =>
+        topicRepository.insert(topic)
       }
     }
   }
 
   def findAll(clusterId: Int): List[Topic] = topicRepository.findAll(clusterId)
   def find(clusterId: Int, name: String): Option[Topic] = topicRepository.find(clusterId, name)
+
+  private def fetchTopics(clusterId: Int, topicNames: List[String]): List[Topic] = {
+    val brokers = brokerService.findAll(clusterId)
+    ClientUtils.fetchTopicMetadata(topicNames.toSet, brokers.map(_.toBrokerEndPoint), "kafcon-topic-metadata-fetcher", 1000).topicsMetadata.toList.map { topicMetadata =>
+      val partitions = fetchPartitions(clusterId, topicMetadata)
+      Topic(
+        name              = topicMetadata.topic,
+        clusterId         = clusterId,
+        brokers           = partitions.flatMap(_.replicas).distinct,
+        replicationFactor = partitions.map(_.replicas.size).max,
+        messageCount      = partitions.foldLeft(0L)((sum, partition) => sum + partition.getMessageCount),
+        partitions        = partitions
+      )
+    }
+  }
 
   private def fetchPartitions(clusterId: Int, topicMetadata: TopicMetadata): List[Partition] = {
     topicMetadata.partitionsMetadata.toList.map { partitionMetadata =>
