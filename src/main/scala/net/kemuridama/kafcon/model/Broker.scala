@@ -1,5 +1,7 @@
 package net.kemuridama.kafcon.model
 
+import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 import javax.management._
 import javax.management.remote._
 
@@ -18,15 +20,11 @@ case class Broker(
 
   def toBrokerEndPoint = BrokerEndPoint(id, host, port)
 
-  def withSimpleConsumer[T](func: SimpleConsumer => T): Option[T] = {
-    try {
-      val consumer = new SimpleConsumer(host, port, 3000, 65536, "kafcon-consumer")
-      val ret = func(consumer)
-      consumer.close
-      Some(ret)
-    } catch {
-      case _: Throwable => None
-    }
+  def withSimpleConsumer[T](func: SimpleConsumer => T): Future[T] = Future {
+    val consumer = new SimpleConsumer(host, port, 3000, 65536, "kafcon-consumer")
+    val ret = func(consumer)
+    consumer.close
+    ret
   }
 
   def withMBeanServerConnection[T](func: MBeanServerConnection => T): Option[T] = {

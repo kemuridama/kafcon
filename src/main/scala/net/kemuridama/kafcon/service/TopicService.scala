@@ -1,5 +1,7 @@
 package net.kemuridama.kafcon.service
 
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
 import scala.concurrent.ExecutionContext.Implicits.global
 
 import kafka.client.ClientUtils
@@ -47,14 +49,16 @@ trait TopicService
       val offset = for {
         leader <- partitionMetadata.leader
         broker <- brokerService.find(clusterId, leader.id)
-        offset <- broker.withSimpleConsumer { consumer =>
+      } yield {
+        val offset = broker.withSimpleConsumer { consumer =>
           val tap = TopicAndPartition(topicMetadata.topic, partitionMetadata.partitionId)
           PartitionOffset(
             first = consumer.earliestOrLatestOffset(tap, -2, 1),
             last  = consumer.earliestOrLatestOffset(tap, -1, 2)
           )
         }
-      } yield offset
+        Await.result(offset, Duration.Inf)
+      }
 
       Partition(
         id          = partitionMetadata.partitionId,
