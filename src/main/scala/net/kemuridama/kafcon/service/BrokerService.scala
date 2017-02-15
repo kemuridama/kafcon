@@ -1,5 +1,7 @@
 package net.kemuridama.kafcon.service
 
+import scala.concurrent.ExecutionContext.Implicits.global
+
 import net.kemuridama.kafcon.model.Broker
 import net.kemuridama.kafcon.repository.{UsesBrokerRepository, MixinBrokerRepository}
 
@@ -8,8 +10,10 @@ trait BrokerService
   with UsesClusterService {
 
   def update: Unit = {
-    clusterService.all.map { cluster =>
-      brokerRepository.insert(cluster.getAllBrokers)
+    clusterService.all.foreach { cluster =>
+      cluster.getAllBrokers.foreach { brokers =>
+        brokerRepository.insert(brokers)
+      }
     }
   }
 

@@ -1,5 +1,7 @@
 package net.kemuridama.kafcon.service
 
+import scala.concurrent.ExecutionContext.Implicits.global
+
 import kafka.client.ClientUtils
 import kafka.api.TopicMetadata
 import kafka.common.TopicAndPartition
@@ -14,9 +16,10 @@ trait TopicService
 
   def update: Unit = {
     clusterService.all.foreach { cluster =>
-      val topicNames = cluster.getAllTopics
-      fetchTopics(cluster.id, topicNames).foreach { topic =>
-        topicRepository.insert(topic)
+      cluster.getAllTopics.foreach { topicNames =>
+        fetchTopics(cluster.id, topicNames).foreach { topic =>
+          topicRepository.insert(topic)
+        }
       }
     }
   }
