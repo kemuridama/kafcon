@@ -1,5 +1,6 @@
 package net.kemuridama.kafcon.service
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import javax.management._
 
 import net.kemuridama.kafcon.model.{BrokerMetrics, CombinedBrokerMetrics, BrokerMetricsLog, CombinedBrokerMetricsLog, SystemMetrics, MeterMetric, MetricsType}

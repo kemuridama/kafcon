@@ -27,17 +27,16 @@ case class Broker(
     ret
   }
 
-  def withMBeanServerConnection[T](func: MBeanServerConnection => T): Option[T] = {
-    jmxPort.flatMap { port =>
-      try {
+  def withMBeanServerConnection[T](func: MBeanServerConnection => T): Future[T] = Future {
+    jmxPort match {
+      case Some(port) => {
         val jmxServiceUrl = new JMXServiceURL("service:jmx:rmi:///jndi/rmi://%s:%d/jmxrmi".format(host, port))
         val jmxConnector = JMXConnectorFactory.connect(jmxServiceUrl)
         val ret = func(jmxConnector.getMBeanServerConnection)
         jmxConnector.close
-        Some(ret)
-      } catch {
-        case _: Throwable => None
+        ret
       }
+      case _ => sys.error("Not found JMX port")
     }
   }
 
