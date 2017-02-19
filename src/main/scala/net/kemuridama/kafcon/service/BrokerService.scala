@@ -10,9 +10,11 @@ trait BrokerService
   with UsesClusterService {
 
   def update: Unit = {
-    clusterService.all.foreach { cluster =>
-      cluster.getAllBrokers.foreach { brokers =>
-        brokerRepository.insert(brokers)
+    clusterService.all.foreach { clusters =>
+      clusters.foreach { cluster =>
+        cluster.getAllBrokers.foreach { brokers =>
+          brokerRepository.insert(brokers)
+        }
       }
     }
   }

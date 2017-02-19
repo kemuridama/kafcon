@@ -17,10 +17,12 @@ trait TopicService
   with UsesBrokerService {
 
   def update: Unit = {
-    clusterService.all.foreach { cluster =>
-      cluster.getAllTopics.foreach { topicNames =>
-        fetchTopics(cluster.id, topicNames).foreach { topic =>
-          topicRepository.insert(topic)
+    clusterService.all.foreach { clusters =>
+      clusters.foreach { cluster =>
+        cluster.getAllTopics.foreach { topicNames =>
+          fetchTopics(cluster.id, topicNames).foreach { topic =>
+            topicRepository.insert(topic)
+          }
         }
       }
     }

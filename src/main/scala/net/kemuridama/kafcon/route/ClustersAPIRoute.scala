@@ -14,14 +14,16 @@ trait ClustersAPIRoute
   val route = pathPrefix("clusters" / IntNumber) { id =>
     pathEnd{
       get {
-        complete(APIResponse(Some(clusterService.getAllClusterResponseData)))
+        onSuccess(clusterService.getAllClusterResponseData) { response =>
+          complete(APIResponse(Some(response)))
+        }
       }
     } ~
     pathPrefix(IntNumber) { id =>
       pathEnd {
         get {
-          clusterService.getClusterResponseData(id) match {
-            case Some(clusterResponseData) => complete(APIResponse(Some(clusterResponseData)))
+          onSuccess(clusterService.getClusterResponseData(id)) {
+            case Some(response) => complete(APIResponse(Some(response)))
             case _ => complete(StatusCodes.NotFound, errorMessage("Not found"))
           }
         }

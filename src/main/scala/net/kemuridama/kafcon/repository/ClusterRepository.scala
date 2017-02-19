@@ -1,18 +1,20 @@
 package net.kemuridama.kafcon.repository
 
+import scala.concurrent.Future
+
 import net.kemuridama.kafcon.model.Cluster
 
 trait ClusterRepository {
 
   private var clusters = List.empty[Cluster]
 
-  def insert(cluster: Cluster): Unit = {
+  def insert(cluster: Cluster): Future[Unit] = Future.successful {
     clusters :+= cluster
   }
 
-  def all: List[Cluster] = clusters
+  def all: Future[List[Cluster]] = Future.successful(clusters)
 
-  def find(id: Int): Option[Cluster] = clusters.find(_.id == id)
+  def find(id: Int): Future[Option[Cluster]] = Future.successful(clusters.find(_.id == id))
 
 }
 
