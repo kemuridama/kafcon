@@ -8,7 +8,7 @@ import kafka.client.ClientUtils
 import kafka.api.TopicMetadata
 import kafka.common.TopicAndPartition
 
-import net.kemuridama.kafcon.model.{Topic, Partition, PartitionOffset}
+import net.kemuridama.kafcon.model.{Cluster, Topic, Partition, PartitionOffset}
 import net.kemuridama.kafcon.repository.{UsesTopicRepository, MixinTopicRepository}
 
 trait TopicService
@@ -16,14 +16,10 @@ trait TopicService
   with UsesClusterService
   with UsesBrokerService {
 
-  def update: Unit = {
-    clusterService.all.foreach { clusters =>
-      clusters.foreach { cluster =>
-        cluster.getAllTopics.foreach { topicNames =>
-          fetchTopics(cluster.id, topicNames).foreach { topic =>
-            topicRepository.insert(topic)
-          }
-        }
+  def update(cluster: Cluster): Unit = {
+    cluster.getAllTopics.foreach { topicNames =>
+      fetchTopics(cluster.id, topicNames).foreach { topic =>
+        topicRepository.insert(topic)
       }
     }
   }

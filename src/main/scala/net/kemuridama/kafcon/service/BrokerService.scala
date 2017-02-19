@@ -2,19 +2,19 @@ package net.kemuridama.kafcon.service
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-import net.kemuridama.kafcon.model.Broker
+import net.kemuridama.kafcon.model.{Cluster, Broker}
 import net.kemuridama.kafcon.repository.{UsesBrokerRepository, MixinBrokerRepository}
 
 trait BrokerService
   extends UsesBrokerRepository
-  with UsesClusterService {
+  with UsesClusterService
+  with UsesBrokerMetricsService {
 
-  def update: Unit = {
-    clusterService.all.foreach { clusters =>
-      clusters.foreach { cluster =>
-        cluster.getAllBrokers.foreach { brokers =>
-          brokerRepository.insert(brokers)
-        }
+  def update(cluster: Cluster): Unit = {
+    cluster.getAllBrokers.foreach { brokers =>
+      brokerRepository.insert(brokers)
+      brokers.foreach { broker =>
+        brokerMetricsService.update(broker)
       }
     }
   }
@@ -29,6 +29,7 @@ object BrokerService
   extends BrokerService
   with MixinBrokerRepository
   with MixinClusterService
+  with MixinBrokerMetricsService
 
 trait UsesBrokerService {
   val brokerService: BrokerService

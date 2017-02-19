@@ -25,6 +25,15 @@ trait ClusterService
     }
   }
 
+  def update = {
+    all.foreach { clusters =>
+      clusters.foreach { cluster =>
+        brokerService.update(cluster)
+        topicService.update(cluster)
+      }
+    }
+  }
+
   def all: Future[List[Cluster]] = clusterRepository.all
   def find(id: Int = 1): Future[Option[Cluster]] = clusterRepository.find(id)
 

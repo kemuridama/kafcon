@@ -3,7 +3,7 @@ package net.kemuridama.kafcon.service
 import scala.concurrent.ExecutionContext.Implicits.global
 import javax.management._
 
-import net.kemuridama.kafcon.model.{BrokerMetrics, CombinedBrokerMetrics, BrokerMetricsLog, CombinedBrokerMetricsLog, SystemMetrics, MeterMetric, MetricsType}
+import net.kemuridama.kafcon.model.{Broker, BrokerMetrics, CombinedBrokerMetrics, BrokerMetricsLog, CombinedBrokerMetricsLog, SystemMetrics, MeterMetric, MetricsType}
 import net.kemuridama.kafcon.repository.{UsesBrokerMetricsLogRepository, MixinBrokerMetricsLogRepository}
 import net.kemuridama.kafcon.util.{UsesApplicationConfig, MixinApplicationConfig}
 
@@ -13,20 +13,18 @@ trait BrokerMetricsService
 
   import collection.JavaConverters._
 
-  def update: Unit = {
-    brokerService.all.foreach { broker =>
-      broker.withMBeanServerConnection { mbsc =>
-        BrokerMetricsLog(
-          clusterId       = broker.clusterId,
-          brokerId        = broker.id,
-          messageInPerSec = getMeterMetric(mbsc, MetricsType.MessagesInPerSec.toObjectName),
-          bytesInPerSec   = getMeterMetric(mbsc, MetricsType.BytesInPerSec.toObjectName),
-          bytesOutPerSec  = getMeterMetric(mbsc, MetricsType.BytesOutPerSec.toObjectName),
-          system          = getSystemMetrics(mbsc)
-        )
-      } map { log =>
-        brokerMetricsLogRepository.insert(log)
-      }
+  def update(broker: Broker): Unit = {
+    broker.withMBeanServerConnection { mbsc =>
+      BrokerMetricsLog(
+        clusterId       = broker.clusterId,
+        brokerId        = broker.id,
+        messageInPerSec = getMeterMetric(mbsc, MetricsType.MessagesInPerSec.toObjectName),
+        bytesInPerSec   = getMeterMetric(mbsc, MetricsType.BytesInPerSec.toObjectName),
+        bytesOutPerSec  = getMeterMetric(mbsc, MetricsType.BytesOutPerSec.toObjectName),
+        system          = getSystemMetrics(mbsc)
+      )
+    } map { log =>
+      brokerMetricsLogRepository.insert(log)
     }
   }
 

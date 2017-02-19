@@ -10,9 +10,6 @@ object kafcon
   with MixinKafconServer
   with MixinClusterService
   with MixinSchedulerService
-  with MixinBrokerService
-  with MixinBrokerMetricsService
-  with MixinTopicService
   with MixinApplicationConfig {
 
   lazy val updateInterval = applicationConfig.cluster.getInt("metricsMaxLogSize")
@@ -21,9 +18,7 @@ object kafcon
   clusterService.init
   val job = JobBuilder.newJob((new Job {
     def execute(context: JobExecutionContext) = {
-      brokerService.update
-      brokerMetricsService.update
-      topicService.update
+      clusterService.update
     }
   }).getClass).withIdentity("updater", "kafcon").build
   val trigger = TriggerBuilder.newTrigger
