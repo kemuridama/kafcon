@@ -11,7 +11,7 @@ trait ClustersAPIRoute
   with UsesClusterService
   with ClusterResponseDataJsonProtocol {
 
-  val route = pathPrefix("clusters" / IntNumber) { id =>
+  val route = pathPrefix("clusters") {
     pathEnd{
       get {
         onSuccess(clusterService.getAllClusterResponseData) { response =>
