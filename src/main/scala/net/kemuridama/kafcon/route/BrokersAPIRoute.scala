@@ -14,14 +14,16 @@ trait BrokersAPIRoute
   val route = pathPrefix("clusters" / IntNumber / "brokers") { clusterId =>
     pathEnd {
       get {
-        complete(APIResponse(Some(brokerService.findAll(clusterId))))
+        onSuccess(brokerService.findAll(clusterId)) { response =>
+          complete(APIResponse(Some(response)))
+        }
       }
     } ~
     pathPrefix(IntNumber) { id =>
       pathEnd {
         get {
-          brokerService.find(clusterId, id) match {
-            case Some(broker) => complete(APIResponse(Some(broker)))
+          onSuccess(brokerService.find(clusterId, id)) {
+            case Some(response) => complete(APIResponse(Some(response)))
             case _ => complete(StatusCodes.NotFound, errorMessage("Not found"))
           }
         }

@@ -1,5 +1,6 @@
 package net.kemuridama.kafcon.service
 
+import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 import javax.management._
 
@@ -28,25 +29,29 @@ trait BrokerMetricsService
     }
   }
 
-  def findByClusterId(clusterId: Int): List[BrokerMetrics] = {
-    brokerService.findAll(clusterId).map { broker =>
-      val brokerMetricsLogs = brokerMetricsLogRepository.findByBrokerId(clusterId, broker.id)
-      BrokerMetrics(
-        brokerId = broker.id,
-        latest   = brokerMetricsLogs.headOption,
-        logs     = brokerMetricsLogs
-      )
+  def findByClusterId(clusterId: Int): Future[List[BrokerMetrics]] = {
+    brokerService.findAll(clusterId).map { brokers =>
+      brokers.map { broker =>
+        val brokerMetricsLogs = brokerMetricsLogRepository.findByBrokerId(clusterId, broker.id)
+        BrokerMetrics(
+          brokerId = broker.id,
+          latest   = brokerMetricsLogs.headOption,
+          logs     = brokerMetricsLogs
+        )
+      }
     }
   }
 
-  def findByBrokerId(clusterId: Int, brokerId: Int): Option[BrokerMetrics] = {
-    brokerService.find(clusterId, brokerId).map { broker =>
-      val brokerMetricsLogs = brokerMetricsLogRepository.findByBrokerId(clusterId, brokerId)
-      BrokerMetrics(
-        brokerId = brokerId,
-        latest   = brokerMetricsLogs.headOption,
-        logs     = brokerMetricsLogs
-      )
+  def findByBrokerId(clusterId: Int, brokerId: Int): Future[Option[BrokerMetrics]] = {
+    brokerService.find(clusterId, brokerId).map { brokerOpt =>
+      brokerOpt.map { broker =>
+        val brokerMetricsLogs = brokerMetricsLogRepository.findByBrokerId(clusterId, brokerId)
+        BrokerMetrics(
+          brokerId = brokerId,
+          latest   = brokerMetricsLogs.headOption,
+          logs     = brokerMetricsLogs
+        )
+      }
     }
   }
 

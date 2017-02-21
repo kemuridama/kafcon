@@ -1,5 +1,6 @@
 package net.kemuridama.kafcon.service
 
+import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
 import net.kemuridama.kafcon.model.{Cluster, Broker}
@@ -19,9 +20,9 @@ trait BrokerService
     }
   }
 
-  def all: List[Broker] = brokerRepository.all
-  def find(clusterId: Int, id: Int): Option[Broker] = brokerRepository.find(clusterId, id)
-  def findAll(clusterId: Int): List[Broker] = brokerRepository.findAll(clusterId)
+  def all: Future[List[Broker]] = brokerRepository.all
+  def find(clusterId: Int, id: Int): Future[Option[Broker]] = brokerRepository.find(clusterId, id)
+  def findAll(clusterId: Int): Future[List[Broker]] = brokerRepository.findAll(clusterId)
 
 }
 

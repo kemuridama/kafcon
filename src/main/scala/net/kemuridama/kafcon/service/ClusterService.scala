@@ -1,6 +1,7 @@
 package net.kemuridama.kafcon.service
 
-import scala.concurrent.Future
+import scala.concurrent.{Future, Await}
+import scala.concurrent.duration.Duration
 import scala.concurrent.ExecutionContext.Implicits.global
 
 import net.kemuridama.kafcon.model.{Cluster, ClusterResponseData}
@@ -38,11 +39,12 @@ trait ClusterService
   def find(id: Int = 1): Future[Option[Cluster]] = clusterRepository.find(id)
 
   def getAllClusterResponseData: Future[List[ClusterResponseData]] = {
-    all.map { clusters =>
-      clusters.map { cluster =>
-        val brokers = brokerService.findAll(cluster.id)
-        val topics = topicService.findAll(cluster.id)
-        cluster.toClusterResponseData(brokers, topics)
+    all.map { clusters => // List[Cluster] ->
+      clusters.map { cluster => // Cluster
+        Await.result(brokerService.findAll(cluster.id).map { brokers =>
+          val topics = topicService.findAll(cluster.id)
+          cluster.toClusterResponseData(brokers, topics)
+        }, Duration.Inf)
       }
     }
   }
@@ -50,9 +52,10 @@ trait ClusterService
   def getClusterResponseData(id: Int): Future[Option[ClusterResponseData]] = {
     find(id).map { clusterOpt =>
       clusterOpt.map { cluster =>
-        val brokers = brokerService.findAll(cluster.id)
-        val topics = topicService.findAll(cluster.id)
-        cluster.toClusterResponseData(brokers, topics)
+        Await.result(brokerService.findAll(cluster.id).map { brokers =>
+          val topics = topicService.findAll(cluster.id)
+          cluster.toClusterResponseData(brokers, topics)
+        }, Duration.Inf)
       }
     }
   }

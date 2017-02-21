@@ -1,6 +1,6 @@
 package net.kemuridama.kafcon.service
 
-import scala.concurrent.Await
+import scala.concurrent.{Future, Await}
 import scala.concurrent.duration.Duration
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -8,7 +8,7 @@ import kafka.client.ClientUtils
 import kafka.api.TopicMetadata
 import kafka.common.TopicAndPartition
 
-import net.kemuridama.kafcon.model.{Cluster, Topic, Partition, PartitionOffset}
+import net.kemuridama.kafcon.model.{Cluster, Broker, Topic, Partition, PartitionOffset}
 import net.kemuridama.kafcon.repository.{UsesTopicRepository, MixinTopicRepository}
 
 trait TopicService
@@ -18,8 +18,10 @@ trait TopicService
 
   def update(cluster: Cluster): Unit = {
     cluster.getAllTopics.foreach { topicNames =>
-      fetchTopics(cluster.id, topicNames).foreach { topic =>
-        topicRepository.insert(topic)
+      fetchTopics(cluster.id, topicNames).foreach { topics =>
+        topics.foreach { topic =>
+          topicRepository.insert(topic)
+        }
       }
     }
   }
@@ -27,35 +29,29 @@ trait TopicService
   def findAll(clusterId: Int): List[Topic] = topicRepository.findAll(clusterId)
   def find(clusterId: Int, name: String): Option[Topic] = topicRepository.find(clusterId, name)
 
-  private def fetchTopics(clusterId: Int, topicNames: List[String]): List[Topic] = {
-    val brokers = brokerService.findAll(clusterId)
-    ClientUtils.fetchTopicMetadata(topicNames.toSet, brokers.map(_.toBrokerEndPoint), "kafcon-topic-metadata-fetcher", 1000).topicsMetadata.toList.map { topicMetadata =>
-      val partitions = fetchPartitions(clusterId, topicMetadata)
-      Topic(
-        name              = topicMetadata.topic,
-        clusterId         = clusterId,
-        brokers           = partitions.flatMap(_.replicas).distinct,
-        replicationFactor = partitions.map(_.replicas.size).max,
-        messageCount      = partitions.foldLeft(0L)((sum, partition) => sum + partition.getMessageCount),
-        partitions        = partitions
-      )
+  private def fetchTopics(clusterId: Int, topicNames: List[String]): Future[List[Topic]] = {
+    brokerService.findAll(clusterId).map { brokers =>
+      ClientUtils.fetchTopicMetadata(topicNames.toSet, brokers.map(_.toBrokerEndPoint), "kafcon-topic-metadata-fetcher", 1000).topicsMetadata.toList.map { topicMetadata =>
+        val partitions = fetchPartitions(clusterId, topicMetadata)
+        Topic(
+          name              = topicMetadata.topic,
+          clusterId         = clusterId,
+          brokers           = partitions.flatMap(_.replicas).distinct,
+          replicationFactor = partitions.map(_.replicas.size).max,
+          messageCount      = partitions.foldLeft(0L)((sum, partition) => sum + partition.getMessageCount),
+          partitions        = partitions
+        )
+      }
     }
   }
 
   private def fetchPartitions(clusterId: Int, topicMetadata: TopicMetadata): List[Partition] = {
     topicMetadata.partitionsMetadata.toList.map { partitionMetadata =>
-      val offset = for {
-        leader <- partitionMetadata.leader
-        broker <- brokerService.find(clusterId, leader.id)
-      } yield {
-        val offset = broker.withSimpleConsumer { consumer =>
-          val tap = TopicAndPartition(topicMetadata.topic, partitionMetadata.partitionId)
-          PartitionOffset(
-            first = consumer.earliestOrLatestOffset(tap, -2, 1),
-            last  = consumer.earliestOrLatestOffset(tap, -1, 2)
-          )
-        }
-        Await.result(offset, Duration.Inf)
+      val offset: Option[PartitionOffset] = partitionMetadata.leader.flatMap { leader =>
+        Await.result(brokerService.find(clusterId, leader.id).flatMap {
+          case Some(broker) => fetchPartition(broker, topicMetadata.topic, partitionMetadata.partitionId)
+          case _            => Future.failed(sys.error("Leader not found"))
+        }, Duration.Inf)
       }
 
       Partition(
@@ -66,6 +62,16 @@ trait TopicService
         firstOffset = offset.map(_.first),
         lastOffset  = offset.map(_.last)
       )
+    }
+  }
+
+  private def fetchPartition(broker: Broker, topicName: String, partitionId: Int): Future[Option[PartitionOffset]] = {
+    broker.withSimpleConsumer { consumer =>
+      val tap = TopicAndPartition(topicName, partitionId)
+      Some(PartitionOffset(
+        first = consumer.earliestOrLatestOffset(tap, -2, 1),
+        last  = consumer.earliestOrLatestOffset(tap, -1, 2)
+      ))
     }
   }
 

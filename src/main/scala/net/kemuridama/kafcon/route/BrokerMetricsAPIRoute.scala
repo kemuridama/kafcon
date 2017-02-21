@@ -16,14 +16,16 @@ trait BrokerMetricsAPIRoute
     pathPrefix("metrics") {
       pathEnd {
         get {
-          complete(APIResponse(Some(brokerMetricsService.findByClusterId(clusterId))))
+          onSuccess(brokerMetricsService.findByClusterId(clusterId)) { response =>
+            complete(APIResponse(Some(response)))
+          }
         }
       }
     } ~
     path(IntNumber / "metrics") { id =>
       get {
-        brokerMetricsService.findByBrokerId(clusterId, id) match {
-          case Some(metrics) => complete(APIResponse(Some(metrics)))
+        onSuccess(brokerMetricsService.findByBrokerId(clusterId, id)) {
+          case Some(response) => complete(APIResponse(Some(response)))
           case _ => complete(StatusCodes.NotFound, errorMessage("Not found"))
         }
       }
