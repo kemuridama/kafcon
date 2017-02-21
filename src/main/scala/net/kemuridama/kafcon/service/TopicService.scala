@@ -26,8 +26,8 @@ trait TopicService
     }
   }
 
-  def findAll(clusterId: Int): List[Topic] = topicRepository.findAll(clusterId)
-  def find(clusterId: Int, name: String): Option[Topic] = topicRepository.find(clusterId, name)
+  def findAll(clusterId: Int): Future[List[Topic]] = topicRepository.findAll(clusterId)
+  def find(clusterId: Int, name: String): Future[Option[Topic]] = topicRepository.find(clusterId, name)
 
   private def fetchTopics(clusterId: Int, topicNames: List[String]): Future[List[Topic]] = {
     brokerService.findAll(clusterId).map { brokers =>

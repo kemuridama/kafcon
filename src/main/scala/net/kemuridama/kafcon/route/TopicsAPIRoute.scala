@@ -14,14 +14,16 @@ trait TopicsAPIRoute
   val route = pathPrefix("clusters" / IntNumber / "topics") { clusterId =>
     pathEnd {
       get {
-        complete(APIResponse(Some(topicService.findAll(clusterId))))
+        onSuccess(topicService.findAll(clusterId)) { response =>
+          complete(APIResponse(Some(response)))
+        }
       }
     } ~
     pathPrefix(Segment) { name =>
       pathEnd {
         get {
-          topicService.find(clusterId, name) match {
-            case Some(topic) => complete(APIResponse(Some(topic)))
+          onSuccess(topicService.find(clusterId, name)) {
+            case Some(response) => complete(APIResponse(Some(response)))
             case _ => complete(StatusCodes.NotFound, errorMessage("Not found"))
           }
         }

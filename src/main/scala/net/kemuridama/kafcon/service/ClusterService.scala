@@ -41,8 +41,10 @@ trait ClusterService
   def getAllClusterResponseData: Future[List[ClusterResponseData]] = {
     all.map { clusters => // List[Cluster] ->
       clusters.map { cluster => // Cluster
-        Await.result(brokerService.findAll(cluster.id).map { brokers =>
-          val topics = topicService.findAll(cluster.id)
+        Await.result(for {
+          brokers <- brokerService.findAll(cluster.id)
+          topics  <- topicService.findAll(cluster.id)
+        } yield {
           cluster.toClusterResponseData(brokers, topics)
         }, Duration.Inf)
       }
@@ -52,8 +54,10 @@ trait ClusterService
   def getClusterResponseData(id: Int): Future[Option[ClusterResponseData]] = {
     find(id).map { clusterOpt =>
       clusterOpt.map { cluster =>
-        Await.result(brokerService.findAll(cluster.id).map { brokers =>
-          val topics = topicService.findAll(cluster.id)
+        Await.result(for {
+          brokers <- brokerService.findAll(cluster.id)
+          topics  <- topicService.findAll(cluster.id)
+        } yield {
           cluster.toClusterResponseData(brokers, topics)
         }, Duration.Inf)
       }
