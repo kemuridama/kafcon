@@ -30,8 +30,11 @@ trait TopicService
   def find(clusterId: Int, name: String): Future[Option[Topic]] = topicRepository.find(clusterId, name)
 
   private def fetchTopics(clusterId: Int, topicNames: List[String]): Future[List[Topic]] = {
-    brokerService.findAll(clusterId).map { brokers =>
-      ClientUtils.fetchTopicMetadata(topicNames.toSet, brokers.map(_.toBrokerEndPoint), "kafcon-topic-metadata-fetcher", 1000).topicsMetadata.toList.map { topicMetadata =>
+    for {
+      brokers        <- brokerService.findAll(clusterId)
+      topicsMetadata <- fetchTopicMetadata(brokers, topicNames)
+    } yield {
+      topicsMetadata.map { topicMetadata =>
         val partitions = fetchPartitions(clusterId, topicMetadata)
         Topic(
           name              = topicMetadata.topic,
@@ -43,6 +46,10 @@ trait TopicService
         )
       }
     }
+  }
+
+  private def fetchTopicMetadata(brokers: List[Broker], topicNames: List[String]): Future[List[TopicMetadata]] = Future {
+    ClientUtils.fetchTopicMetadata(topicNames.toSet, brokers.map(_.toBrokerEndPoint), "kafcon-topic-metadata-fetcher", 1000).topicsMetadata.toList
   }
 
   private def fetchPartitions(clusterId: Int, topicMetadata: TopicMetadata): List[Partition] = {
