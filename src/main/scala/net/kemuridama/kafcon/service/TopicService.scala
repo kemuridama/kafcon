@@ -5,6 +5,7 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.ExecutionContext.Implicits.global
 
 import kafka.client.ClientUtils
+import kafka.admin.AdminUtils
 import kafka.api.TopicMetadata
 import kafka.common.TopicAndPartition
 
@@ -28,6 +29,14 @@ trait TopicService
 
   def findAll(clusterId: Int): Future[List[Topic]] = topicRepository.findAll(clusterId)
   def find(clusterId: Int, name: String): Future[Option[Topic]] = topicRepository.find(clusterId, name)
+
+  def create(clusterId: Int, name: String, replicationFactor: Int, partitionCount: Int): Future[Topic] = {
+    for {
+      Some(cluster) <- clusterService.find(clusterId)
+      _ <- cluster.withZkUtils(zkUtils => AdminUtils.createTopic(zkUtils, name, partitionCount, replicationFactor))
+      Some(topic) <- fetchTopics(clusterId, List(name)).map(_.headOption)
+    } yield topic
+  }
 
   private def fetchTopics(clusterId: Int, topicNames: List[String]): Future[List[Topic]] = {
     for {
