@@ -1,7 +1,6 @@
 package net.kemuridama.kafcon.service
 
-import scala.concurrent.{Future, Await}
-import scala.concurrent.duration.Duration
+import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
 import net.kemuridama.kafcon.model.{Cluster, ClusterResponseData}
@@ -19,9 +18,9 @@ trait ClusterService
   def init = {
     applicationConfig.clusters.toList.zipWithIndex.map { case (config, index) =>
       clusterRepository.insert(Cluster(
-        index + 1,
-        config.getString("name"),
-        config.getStringList("zookeepers").toList
+        id         = index + 1,
+        name       = config.getString("name"),
+        zookeepers = config.getStringList("zookeepers").toList
       ))
     }
   }
@@ -39,28 +38,23 @@ trait ClusterService
   def find(id: Int = 1): Future[Option[Cluster]] = clusterRepository.find(id)
 
   def getAllClusterResponseData: Future[List[ClusterResponseData]] = {
-    all.map { clusters => // List[Cluster] ->
-      clusters.map { cluster => // Cluster
-        Await.result(for {
+    all.flatMap { clusters =>
+      Future.sequence(clusters.map { cluster =>
+        for {
           brokers <- brokerService.findAll(cluster.id)
           topics  <- topicService.findAll(cluster.id)
-        } yield {
-          cluster.toClusterResponseData(brokers, topics)
-        }, Duration.Inf)
-      }
+        } yield cluster.toClusterResponseData(brokers, topics)
+      })
     }
   }
 
   def getClusterResponseData(id: Int): Future[Option[ClusterResponseData]] = {
-    find(id).map { clusterOpt =>
-      clusterOpt.map { cluster =>
-        Await.result(for {
-          brokers <- brokerService.findAll(cluster.id)
-          topics  <- topicService.findAll(cluster.id)
-        } yield {
-          cluster.toClusterResponseData(brokers, topics)
-        }, Duration.Inf)
-      }
+    (for {
+      Some(cluster) <- find(id)
+      brokers       <- brokerService.findAll(cluster.id)
+      topics        <- topicService.findAll(cluster.id)
+    } yield Some(cluster.toClusterResponseData(brokers, topics))).recoverWith {
+      case _: Throwable => Future.successful(None)
     }
   }
 
