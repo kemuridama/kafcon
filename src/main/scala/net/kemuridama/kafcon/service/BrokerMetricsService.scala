@@ -30,28 +30,32 @@ trait BrokerMetricsService
   }
 
   def findByClusterId(clusterId: Int): Future[List[BrokerMetrics]] = {
-    brokerService.findAll(clusterId).map { brokers =>
-      brokers.map { broker =>
-        val brokerMetricsLogs = brokerMetricsLogRepository.findByBrokerId(clusterId, broker.id)
-        BrokerMetrics(
-          brokerId = broker.id,
-          latest   = brokerMetricsLogs.headOption,
-          logs     = brokerMetricsLogs
-        )
-      }
-    }
+    for {
+      brokers        <- brokerService.findAll(clusterId)
+      brokersMetrics <- Future.sequence(brokers.map { broker =>
+        brokerMetricsLogRepository.findByBrokerId(clusterId, broker.id).map { brokerMetricsLogs =>
+          BrokerMetrics(
+            brokerId = broker.id,
+            latest   = brokerMetricsLogs.headOption,
+            logs     = brokerMetricsLogs
+          )
+        }
+      })
+    } yield brokersMetrics
   }
 
   def findByBrokerId(clusterId: Int, brokerId: Int): Future[Option[BrokerMetrics]] = {
-    brokerService.find(clusterId, brokerId).map { brokerOpt =>
-      brokerOpt.map { broker =>
-        val brokerMetricsLogs = brokerMetricsLogRepository.findByBrokerId(clusterId, brokerId)
-        BrokerMetrics(
-          brokerId = brokerId,
-          latest   = brokerMetricsLogs.headOption,
-          logs     = brokerMetricsLogs
-        )
-      }
+    (for {
+      Some(broker)      <- brokerService.find(clusterId, brokerId)
+      brokerMetricsLogs <- brokerMetricsLogRepository.findByBrokerId(clusterId, brokerId)
+    } yield {
+      Some(BrokerMetrics(
+        brokerId = brokerId,
+        latest   = brokerMetricsLogs.headOption,
+        logs     = brokerMetricsLogs
+      ))
+    }).recoverWith {
+      case _: Throwable => Future.successful(None)
     }
   }
 

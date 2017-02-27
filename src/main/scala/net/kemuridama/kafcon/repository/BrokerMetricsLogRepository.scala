@@ -1,5 +1,7 @@
 package net.kemuridama.kafcon.repository
 
+import scala.concurrent.Future
+
 import net.kemuridama.kafcon.model.BrokerMetricsLog
 import net.kemuridama.kafcon.util.{UsesApplicationConfig, MixinApplicationConfig}
 
@@ -15,7 +17,9 @@ trait BrokerMetricsLogRepository
     logs = logs.filterNot(l => l.clusterId == log.clusterId && l.brokerId == log.brokerId) ++ (if (brokerLogs.size >= maxLogSize) brokerLogs.init else brokerLogs)
   }
 
-  def findByBrokerId(clusterId: Int, brokerId: Int): List[BrokerMetricsLog] = logs.filter(l => l.clusterId == clusterId && l.brokerId == brokerId)
+  def findByBrokerId(clusterId: Int, brokerId: Int): Future[List[BrokerMetricsLog]] = Future.successful {
+    logs.filter(l => l.clusterId == clusterId && l.brokerId == brokerId)
+  }
 
 }
 
