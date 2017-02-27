@@ -8,7 +8,7 @@ import kafka.admin.AdminUtils
 import kafka.api.{TopicMetadata, PartitionMetadata}
 import kafka.common.TopicAndPartition
 
-import net.kemuridama.kafcon.model.{Cluster, Broker, Topic, Partition, PartitionOffset}
+import net.kemuridama.kafcon.model.{Cluster, Broker, Topic, Partition}
 import net.kemuridama.kafcon.repository.{UsesTopicRepository, MixinTopicRepository}
 
 trait TopicService
